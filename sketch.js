@@ -56,9 +56,11 @@ function buildSpatialGrid(){
   }
 }
 
-// field angle original — mas aplicado sobre theta/phi como se fossem x/y
+// field angle original — mapeia theta/phi para o mesmo espaço que x/y usava (0..CANVAS_W)
 function fieldAngle(theta,phi){
-  return noise(theta*FIELD_SCALE*500, phi*FIELD_SCALE*500, frameCount*FIELD_EVOLUTION)*FIELD_ANGLE;
+  let fx = (theta/TWO_PI)*CANVAS_W;   // 0..CANVAS_W
+  let fy = (phi/PI)*CANVAS_H;         // 0..CANVAS_H
+  return noise(fx*FIELD_SCALE, fy*FIELD_SCALE, frameCount*FIELD_EVOLUTION)*FIELD_ANGLE;
 }
 
 function windowResized(){CANVAS_W=document.body.clientWidth||window.innerWidth;CANVAS_H=document.body.clientHeight||window.innerHeight;resizeCanvas(CANVAS_W,CANVAS_H);}
