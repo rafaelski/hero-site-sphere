@@ -35,9 +35,7 @@ function toSphere(x, y) {
   let sx =  SPHERE_R * sin(phi) * cos(theta);
   let sy =  SPHERE_R * cos(phi);
   let sz =  SPHERE_R * sin(phi) * sin(theta);
-  // profundidade para alpha (frente/trás)
   let depth = sz / SPHERE_R; // -1..+1
-  // projeção ortogonal simples (sem perspectiva distorcida)
   return {
     px: CANVAS_W/2 + sx,
     py: CANVAS_H/2 + sy,
@@ -49,7 +47,16 @@ function toSphere(x, y) {
 function emitTheme(){ var lum=0.299*BG_COLOR[0]+0.587*BG_COLOR[1]+0.114*BG_COLOR[2]; window.parent.postMessage({fidenzaTheme:lum>128?'light':'dark'},'*'); }
 function setup(){ CANVAS_W=document.body.clientWidth||window.innerWidth; CANVAS_H=document.body.clientHeight||window.innerHeight; SPHERE_R=calcSphereR(); let cnv=createCanvas(CANVAS_W,CANVAS_H); cnv.elt.style.cssText='display:block;position:absolute;top:0;left:0;pointer-events:none;'; document.addEventListener('mousemove',function(e){ let r=cnv.elt.getBoundingClientRect(); attractor.x=e.clientX-r.left;attractor.y=e.clientY-r.top; attractor.strength=1.0;attractor.active=true; }); buildUI(); init(); emitTheme(); new ResizeObserver(function(es){for(let e of es){let nw=Math.floor(e.contentRect.width),nh=Math.floor(e.contentRect.height);if(nw>0&&nh>0&&(nw!==CANVAS_W||nh!==CANVAS_H)){CANVAS_W=nw;CANVAS_H=nh;SPHERE_R=calcSphereR();resizeCanvas(CANVAS_W,CANVAS_H);init();}}}).observe(document.body); }
 
+let _firstFrame = true;
+
 function draw(){
+  // garante dimensões corretas no primeiro frame (resolve mobile/iframe)
+  if(_firstFrame){
+    let nw=Math.floor(document.body.clientWidth||window.innerWidth);
+    let nh=Math.floor(document.body.clientHeight||window.innerHeight);
+    if(nw!==CANVAS_W||nh!==CANVAS_H){ CANVAS_W=nw; CANVAS_H=nh; SPHERE_R=calcSphereR(); resizeCanvas(CANVAS_W,CANVAS_H); init(); }
+    _firstFrame=false;
+  }
   if(BG_FADE){fill(BG_COLOR[0],BG_COLOR[1],BG_COLOR[2],BG_FADE_ALPHA);noStroke();rect(0,0,width,height);}
   else{background(BG_COLOR[0],BG_COLOR[1],BG_COLOR[2]);}
   if(attractor.strength>0){attractor.strength=max(0,attractor.strength-ATTRACTOR_DECAY);if(attractor.strength===0)attractor.active=false;}
