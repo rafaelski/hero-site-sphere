@@ -65,7 +65,10 @@ class Particle{
     while(this.trail.length>TRAIL_LENGTH)this.trail.shift();
     let fa=fieldAngle(this.x,this.y),fx=cos(fa),fy=sin(fa);
     if(attractor.active&&attractor.strength>0){
-      let dx=attractor.x-this.x,dy=attractor.y-this.y,d=sqrt(dx*dx+dy*dy);
+      // converte posição do mouse (tela) de volta para espaço 2D flat
+      // usando a projeção inversa de toSphere()
+      let proj=toSphere(this.x,this.y);
+      let dx=attractor.x-proj.px,dy=attractor.y-proj.py,d=sqrt(dx*dx+dy*dy);
       if(d<ATTRACTOR_RADIUS){let inf=(1-d/ATTRACTOR_RADIUS)*attractor.strength;
         if(d>0.1){let rf=(d-ORBIT_DISTANCE)/ATTRACTOR_RADIUS,nx=dx/d,ny=dy/d,tx=-ny,ty=nx;
           let ax=(nx*rf+tx*0.8)*inf*ATTRACTOR_STRENGTH,ay=(ny*rf+ty*0.8)*inf*ATTRACTOR_STRENGTH;
