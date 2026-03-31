@@ -1,4 +1,4 @@
-// FIDENZA SPHERE — esfera + hover atrator + repulsão + flow field completo
+// FIDENZA SPHERE — hover + painel + esfera 3D projetada
 
 // ── Esfera ────────────────────────────────────────────────────────────────────
 let SPHERE_R      = 260;
@@ -30,9 +30,9 @@ let ATTRACTOR_RADIUS   = 180;
 let ATTRACTOR_STRENGTH = 2.5;
 let ATTRACTOR_DECAY    = 0.015;
 let ORBIT_DISTANCE     = 60;
-let attractor = { x: 0, y: 0, strength: 0, active: false };
+let attractor = { x:0, y:0, strength:0, active:false };
 
-// ── Estilo / Cores ────────────────────────────────────────────────────────────
+// ── Cores / Estilo ────────────────────────────────────────────────────────────
 let BG_FADE       = false;
 let BG_FADE_ALPHA = 18;
 let PALETTE = [[210,80,50,0.28],[60,110,190,0.28],[220,185,50,0.16],[190,190,190,0.16],[40,40,40,0.12]];
@@ -46,32 +46,32 @@ const PALETTES_PRESET = {
 };
 let SAT_MULT   = 1.0;
 let LIGHT_MULT = 1.0;
-let BG_COLOR   = [245, 240, 228];
+let BG_COLOR   = [245,240,228];
 
 // ── Seed ──────────────────────────────────────────────────────────────────────
 let USE_FIXED_SEED = false;
 let FIXED_SEED     = 42;
 
 // ── Internos ──────────────────────────────────────────────────────────────────
-let particles    = [];
-let spatialGrid  = { cells: {}, cell: 30 };
+let particles   = [];
+let spatialGrid = { cells:{}, cell:30 };
 let panel;
 let cx, cy;
 
 // ─────────────────────────────────────────────────────────────────────────────
 
 function emitTheme(){
-  var lum = 0.299*BG_COLOR[0] + 0.587*BG_COLOR[1] + 0.114*BG_COLOR[2];
-  try{ window.parent.postMessage({ fidenzaTheme: lum>128?'light':'dark' },'*'); }catch(e){}
+  var lum = 0.299*BG_COLOR[0]+0.587*BG_COLOR[1]+0.114*BG_COLOR[2];
+  try{ window.parent.postMessage({fidenzaTheme:lum>128?'light':'dark'},'*'); }catch(e){}
 }
 
 function setup(){
-  cx = (document.body.clientWidth  || window.innerWidth)  / 2;
-  cy = (document.body.clientHeight || window.innerHeight) / 2;
+  cx = (document.body.clientWidth||window.innerWidth)/2;
+  cy = (document.body.clientHeight||window.innerHeight)/2;
   let cnv = createCanvas(cx*2, cy*2);
   cnv.elt.style.cssText = 'display:block;position:absolute;top:0;left:0;pointer-events:none;';
 
-  // Hover do mouse -> atrator (igual ao original)
+  // ── hover — idêntico ao original ─────────────────────────────────────────
   document.addEventListener('mousemove', function(e){
     let r = cnv.elt.getBoundingClientRect();
     attractor.x        = e.clientX - r.left;
@@ -87,41 +87,31 @@ function setup(){
   new ResizeObserver(function(es){
     for(let e of es){
       let nw=Math.floor(e.contentRect.width), nh=Math.floor(e.contentRect.height);
-      if(nw>0 && nh>0 && (nw!==width || nh!==height)){
-        resizeCanvas(nw,nh); cx=nw/2; cy=nh/2; init();
-      }
+      if(nw>0&&nh>0&&(nw!==width||nh!==height)){ resizeCanvas(nw,nh); cx=nw/2; cy=nh/2; init(); }
     }
   }).observe(document.body);
 }
 
 function draw(){
-  if(BG_FADE){
-    fill(BG_COLOR[0],BG_COLOR[1],BG_COLOR[2],BG_FADE_ALPHA);
-    noStroke(); rect(0,0,width,height);
-  } else {
-    background(BG_COLOR[0],BG_COLOR[1],BG_COLOR[2]);
-  }
+  if(BG_FADE){ fill(BG_COLOR[0],BG_COLOR[1],BG_COLOR[2],BG_FADE_ALPHA); noStroke(); rect(0,0,width,height); }
+  else{ background(BG_COLOR[0],BG_COLOR[1],BG_COLOR[2]); }
 
   if(AUTO_ROTATE) rotY += ROT_SPEED_Y;
 
-  // Decai atrator
-  if(attractor.strength > 0){
-    attractor.strength = max(0, attractor.strength - ATTRACTOR_DECAY);
-    if(attractor.strength === 0) attractor.active = false;
+  if(attractor.strength>0){
+    attractor.strength = max(0, attractor.strength-ATTRACTOR_DECAY);
+    if(attractor.strength===0) attractor.active=false;
   }
 
-  // Contorno da esfera
   if(SHOW_OUTLINE){
     noFill();
-    let lum = 0.299*BG_COLOR[0]+0.587*BG_COLOR[1]+0.114*BG_COLOR[2];
-    stroke(lum>128 ? color(0,0,0,20) : color(255,255,255,20));
+    let lum=0.299*BG_COLOR[0]+0.587*BG_COLOR[1]+0.114*BG_COLOR[2];
+    stroke(lum>128?color(0,0,0,20):color(255,255,255,20));
     strokeWeight(0.8);
     ellipse(cx, cy, SPHERE_R*2, SPHERE_R*2);
   }
 
-  // Grade espacial (em coordenadas projetadas 2D)
   buildSpatialGrid();
-
   for(let p of particles){ p.update(); p.draw(); }
 }
 
@@ -129,12 +119,11 @@ function init(){
   let s = USE_FIXED_SEED ? FIXED_SEED : floor(random(999999));
   randomSeed(s); noiseSeed(s);
   particles = [];
-  for(let i=0; i<NUM_PARTICLES; i++) particles.push(new Particle());
+  for(let i=0;i<NUM_PARTICLES;i++) particles.push(new Particle());
 }
 
-// Grade espacial em 2D projetado (para repulsão)
 function buildSpatialGrid(){
-  spatialGrid.cell  = max(1, REPULSION_RADIUS);
+  spatialGrid.cell  = max(1,REPULSION_RADIUS);
   spatialGrid.cells = {};
   for(let p of particles){
     let proj = project(p.theta, p.phi);
@@ -145,36 +134,29 @@ function buildSpatialGrid(){
   }
 }
 
-// Projeção esférica (theta, phi) -> (sx, sy, depth)
 function project(theta, phi){
-  let x0 =  SPHERE_R * sin(phi)*cos(theta);
-  let y0 =  SPHERE_R * cos(phi);
-  let z0 =  SPHERE_R * sin(phi)*sin(theta);
-
+  let x0 =  SPHERE_R*sin(phi)*cos(theta);
+  let y0 =  SPHERE_R*cos(phi);
+  let z0 =  SPHERE_R*sin(phi)*sin(theta);
   let cosX=cos(rotX), sinX=sin(rotX);
   let y1 = y0*cosX - z0*sinX;
   let z1 = y0*sinX + z0*cosX;
-
   let cosY=cos(rotY), sinY=sin(rotY);
   let x2 =  x0*cosY + z1*sinY;
   let z2 = -x0*sinY + z1*cosY;
-
   let depth = z2/SPHERE_R;
-  let persp = 1 + depth*0.18;
-  return { sx: cx+x2*persp, sy: cy+y1*persp, depth };
+  let persp = 1+depth*0.18;
+  return { sx:cx+x2*persp, sy:cy+y1*persp, depth };
 }
 
-// Campo de fluxo em coordenadas esféricas, usa FIELD_SCALE e FIELD_ANGLE
 function fieldDelta(theta, phi){
-  let t  = frameCount * FIELD_EVOLUTION;
+  let t  = frameCount*FIELD_EVOLUTION;
   let nx = cos(theta)*sin(phi)*FIELD_SCALE;
   let ny = sin(theta)*sin(phi)*FIELD_SCALE;
   let nz = cos(phi)           *FIELD_SCALE;
-
-  let a1 = (noise(nx,       ny+3.7, t) - 0.5) * FIELD_ANGLE;
-  let a2 = (noise(nx+5.3,   nz+1.9, t) - 0.5) * FIELD_ANGLE;
-
-  return { dTheta: cos(a1)*SPEED, dPhi: sin(a2)*SPEED };
+  let a1 = (noise(nx,       ny+3.7, t)-0.5)*FIELD_ANGLE;
+  let a2 = (noise(nx+5.3,   nz+1.9, t)-0.5)*FIELD_ANGLE;
+  return { dTheta:cos(a1)*SPEED, dPhi:sin(a2)*SPEED };
 }
 
 class Particle {
@@ -190,37 +172,40 @@ class Particle {
   }
 
   update(){
-    this.trail.push({ theta: this.theta, phi: this.phi });
-    while(this.trail.length > TRAIL_LENGTH) this.trail.shift();
+    this.trail.push({theta:this.theta, phi:this.phi});
+    while(this.trail.length>TRAIL_LENGTH) this.trail.shift();
 
-    let { dTheta, dPhi } = fieldDelta(this.theta, this.phi);
+    let {dTheta,dPhi} = fieldDelta(this.theta, this.phi);
 
-    // ── Atrator (hover) ───────────────────────────────────────────────────────
+    // ── Atrator — força idêntica ao original, escala corrigida ──────────────
     if(attractor.active && attractor.strength>0 && this._proj){
-      let dx = attractor.x - this._proj.sx;
-      let dy = attractor.y - this._proj.sy;
+      let dx = attractor.x-this._proj.sx;
+      let dy = attractor.y-this._proj.sy;
       let d  = sqrt(dx*dx+dy*dy);
-      if(d < ATTRACTOR_RADIUS){
+      if(d<ATTRACTOR_RADIUS){
         let inf = (1-d/ATTRACTOR_RADIUS)*attractor.strength;
-        if(d > 0.1){
-          // Radial + tangential (orbita) — identico ao original
-          let rf = (d-ORBIT_DISTANCE)/ATTRACTOR_RADIUS;
-          let nx_ = dx/d, ny_ = dy/d;
-          let tx  = -ny_, ty = nx_;
-          let ax  = (nx_*rf + tx*0.8)*inf*ATTRACTOR_STRENGTH;
-          let ay  = (ny_*rf + ty*0.8)*inf*ATTRACTOR_STRENGTH;
-          // Converte força 2D em deslocamento esférico (aprox. local)
-          let sinP = sin(this.phi);
-          dTheta = lerp(dTheta, dTheta + ax/(SPHERE_R*(sinP+0.001))*0.04, inf);
-          dPhi   = lerp(dPhi,   dPhi   + ay/ SPHERE_R              *0.04, inf);
+        if(d>0.1){
+          // Radial + tangential (igual ao original)
+          let rf  = (d-ORBIT_DISTANCE)/ATTRACTOR_RADIUS;
+          let nx_ = dx/d, ny_=dy/d;
+          let tx  = -ny_, ty=nx_;
+          let ax  = (nx_*rf+tx*0.8)*inf*ATTRACTOR_STRENGTH;
+          let ay  = (ny_*rf+ty*0.8)*inf*ATTRACTOR_STRENGTH;
+          // Escala: pixels → radianos. 
+          // SPHERE_R pixels = PI radianos na superfície → fator = PI/SPHERE_R
+          // Modulado por SPEED para manter proporção com a velocidade atual
+          let k = (PI/SPHERE_R) * SPEED * 3.0;
+          let sinP = max(0.08, abs(sin(this.phi)));
+          dTheta = lerp(dTheta, dTheta + ax/sinP*k, inf);
+          dPhi   = lerp(dPhi,   dPhi   + ay*k,      inf);
         }
       }
     }
 
-    // ── Repulsão ──────────────────────────────────────────────────────────────
+    // ── Repulsão — grade espacial idêntica ao original, escala corrigida ────
     if(REPULSION_STRENGTH>0 && this._proj){
-      let px = this._proj.sx, py = this._proj.sy;
-      let gcx= floor(px/spatialGrid.cell), gcy=floor(py/spatialGrid.cell);
+      let px=this._proj.sx, py=this._proj.sy;
+      let gcx=floor(px/spatialGrid.cell), gcy=floor(py/spatialGrid.cell);
       let rx=0, ry=0;
       for(let ddx=-1;ddx<=1;ddx++){
         for(let ddy=-1;ddy<=1;ddy++){
@@ -230,25 +215,25 @@ class Particle {
             if(o===this||!o._proj) continue;
             let ox=px-o._proj.sx, oy=py-o._proj.sy;
             let od=sqrt(ox*ox+oy*oy);
-            if(od>0 && od<REPULSION_RADIUS){
+            if(od>0&&od<REPULSION_RADIUS){
               let f=(1-od/REPULSION_RADIUS)*REPULSION_STRENGTH;
               rx+=ox/od*f; ry+=oy/od*f;
             }
           }
         }
       }
-      let sinP = sin(this.phi);
-      dTheta += rx/(SPHERE_R*(sinP+0.001))*0.015;
-      dPhi   += ry/ SPHERE_R              *0.015;
+      // Mesma escala: proporcionada ao SPEED
+      let k = (PI/SPHERE_R)*SPEED*1.2;
+      let sinP = max(0.08, abs(sin(this.phi)));
+      dTheta += rx/sinP*k;
+      dPhi   += ry*k;
     }
 
-    // Inércia (lerp igual ao original)
     this.velT = lerp(this.velT, dTheta, 0.25);
     this.velP = lerp(this.velP, dPhi,   0.25);
     this.theta += this.velT;
     this.phi   += this.velP;
 
-    // Mantém phi em [0,PI]
     if(this.phi<0)  { this.phi=-this.phi;        this.theta+=PI; }
     if(this.phi>PI) { this.phi=TWO_PI-this.phi;  this.theta+=PI; }
     this.theta=((this.theta%TWO_PI)+TWO_PI)%TWO_PI;
@@ -257,18 +242,13 @@ class Particle {
   draw(){
     let n=this.trail.length;
     if(n<2) return;
-
     let pts      = this.trail.map(p=>project(p.theta,p.phi));
     let avgDepth = pts.reduce((s,p)=>s+p.depth,0)/n;
     let visibility = map(avgDepth,-1,1,BACKFACE_CULL,1.0);
     let wScale     = map(avgDepth,-1,1,0.35,1.0);
-
     let col=pickColorFromNorm(this.colNorm);
-    let r=col[0],g=col[1],b=col[2];
-
     noStroke();
-    fill(r,g,b, 255*visibility*col[3]*6);
-
+    fill(col[0],col[1],col[2], 255*visibility*col[3]*6);
     let left=[],right=[];
     for(let i=0;i<n;i++){
       let a = i<n-1
@@ -332,7 +312,6 @@ function buildUI(){
   document.body.appendChild(btn);
 
   function sec(t){let d=document.createElement('div');d.className='sec';d.textContent=t;panel.appendChild(d);}
-
   function sliderRef(label,get,set,mn,mx,step){
     let div=document.createElement('div');div.className='ctrl';
     let lbl=document.createElement('label'),txt=document.createTextNode(label+' '),val=document.createElement('span');
@@ -350,8 +329,8 @@ function buildUI(){
 
   sec('Esfera');
   slider('raio',           ()=>SPHERE_R,      v=>SPHERE_R=v,      60,  500,  5);
-  chk('contorno',          ()=>SHOW_OUTLINE,  v=>SHOW_OUTLINE=v);
-  chk('auto-rotacao',      ()=>AUTO_ROTATE,   v=>AUTO_ROTATE=v);
+  chk(  'contorno',        ()=>SHOW_OUTLINE,  v=>SHOW_OUTLINE=v);
+  chk(  'auto-rotacao',    ()=>AUTO_ROTATE,   v=>AUTO_ROTATE=v);
   slider('vel. rotacao',   ()=>ROT_SPEED_Y,   v=>ROT_SPEED_Y=v,   0,   0.006,0.0001);
   slider('backface alpha', ()=>BACKFACE_CULL, v=>BACKFACE_CULL=v, 0,   0.6,  0.01);
 
@@ -370,16 +349,16 @@ function buildUI(){
   slider('min width',  ()=>MIN_WIDTH,     v=>MIN_WIDTH=v,                          0.5,30,0.5);
   slider('max width',  ()=>MAX_WIDTH,     v=>MAX_WIDTH=v,                          1,  60,0.5);
   slider('speed',      ()=>SPEED,         v=>SPEED=v,                              0.001,0.06,0.001);
-  chk('fade tail',     ()=>FADE_TAIL,     v=>FADE_TAIL=v);
+  chk(  'fade tail',   ()=>FADE_TAIL,     v=>FADE_TAIL=v);
 
   sec('Atrator (hover)');
-  slider('raio',       ()=>ATTRACTOR_RADIUS,   v=>ATTRACTOR_RADIUS=v,   10, 500,  5);
-  slider('forca',      ()=>ATTRACTOR_STRENGTH, v=>ATTRACTOR_STRENGTH=v, 0.1,16.0, 0.1);
-  slider('decaimento', ()=>ATTRACTOR_DECAY,    v=>ATTRACTOR_DECAY=v,    0.001,0.05,0.001);
-  slider('raio orbita',()=>ORBIT_DISTANCE,     v=>ORBIT_DISTANCE=v,     5,  300,  5);
+  slider('raio',        ()=>ATTRACTOR_RADIUS,   v=>ATTRACTOR_RADIUS=v,   10, 500, 5);
+  slider('forca',       ()=>ATTRACTOR_STRENGTH, v=>ATTRACTOR_STRENGTH=v, 0.1,16.0,0.1);
+  slider('decaimento',  ()=>ATTRACTOR_DECAY,    v=>ATTRACTOR_DECAY=v,    0.001,0.05,0.001);
+  slider('raio orbita', ()=>ORBIT_DISTANCE,     v=>ORBIT_DISTANCE=v,     5,  300, 5);
 
   sec('Estilo');
-  chk('bg fade',         ()=>BG_FADE,       v=>BG_FADE=v);
+  chk(  'bg fade',       ()=>BG_FADE,       v=>BG_FADE=v);
   slider('bg fade alpha',()=>BG_FADE_ALPHA, v=>BG_FADE_ALPHA=v, 2,60,1);
 
   sec('Cores');
@@ -402,8 +381,8 @@ function buildUI(){
     };
     window._paletteSelect=s;div.appendChild(lbl);div.appendChild(s);panel.appendChild(div);
   }
-  satRef   =sliderRef('saturacao', ()=>SAT_MULT,   v=>{SAT_MULT=v;   if(window._paletteSelect)window._paletteSelect.value='custom';},0,2.0,0.05);
-  lightRef =sliderRef('brilho',    ()=>LIGHT_MULT, v=>{LIGHT_MULT=v; if(window._paletteSelect)window._paletteSelect.value='custom';},0,2.0,0.05);
+  satRef  =sliderRef('saturacao',()=>SAT_MULT,   v=>{SAT_MULT=v;   if(window._paletteSelect)window._paletteSelect.value='custom';},0,2.0,0.05);
+  lightRef=sliderRef('brilho',   ()=>LIGHT_MULT, v=>{LIGHT_MULT=v; if(window._paletteSelect)window._paletteSelect.value='custom';},0,2.0,0.05);
   {
     let div=document.createElement('div');div.className='ctrl';let lbl=document.createElement('label');lbl.textContent='cor do fundo';
     let cp=document.createElement('input');cp.type='color';cp.value=rgbToHex(BG_COLOR[0],BG_COLOR[1],BG_COLOR[2]);
@@ -444,8 +423,8 @@ function buildUI(){
   rebuildColorEditor();
 
   sec('Seed');
-  chk('fixed seed',()=>USE_FIXED_SEED,v=>{USE_FIXED_SEED=v;init();});
-  slider('seed',   ()=>FIXED_SEED,    v=>{FIXED_SEED=v;if(USE_FIXED_SEED)init();},1,9999,1);
+  chk(  'fixed seed',()=>USE_FIXED_SEED,v=>{USE_FIXED_SEED=v;init();});
+  slider('seed',     ()=>FIXED_SEED,    v=>{FIXED_SEED=v;if(USE_FIXED_SEED)init();},1,9999,1);
 
   let row=document.createElement('div');row.className='btn-row';
   let rb=document.createElement('button');rb.textContent='REINICIAR';rb.onclick=init;
