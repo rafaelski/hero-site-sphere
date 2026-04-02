@@ -212,189 +212,220 @@ function applyColorMods(c){ let r=c[0]/255,g=c[1]/255,b=c[2]/255,mx=Math.max(r,g
 function rgbToHex(r,g,b){return'#'+[r,g,b].map(v=>v.toString(16).padStart(2,'0')).join('');}
 function hexToRgb(h){return{r:parseInt(h.slice(1,3),16),g:parseInt(h.slice(3,5),16),b:parseInt(h.slice(5,7),16)};}
 
-// ── SLIDER SEMICIRCULAR ────────────────────────────────────────────────────────
+// ── SLIDER DO USUÁRIO ──────────────────────────────────────────────────────────
 function buildUserSlider(){
-  // ── Ajuste de posição/tamanho aqui ──
-  const ARC_R      = 80;   // raio do arco (px)
-  const SLIDER_RIGHT = 0;  // distância da borda direita
-  // ────────────────────────────────────
+  const ARC_W = 190;
+  const ARC_H = 420;
+  const WRAP_RIGHT = 18;
+  const R = 158;
+  const CX = ARC_W - 8;
+  const CY = ARC_H / 2;
+  const START_A = -Math.PI * 0.78;
+  const END_A = Math.PI * 0.78;
+  const ICONS = ['slash','double','split','orbit','tilt'];
 
-  // O semicírculo vai de 270° (topo) até 90° (base), passando pela esquerda (180°)
-  // Ângulo 0 = preset 1 (topo), ângulo 4 = preset 5 (base)
-  // Arco: de -90° a +90° no lado esquerdo → de 270° a 90° no sentido anti-horário
-  // O arco vai pelo lado esquerdo: topo(-90°) → esquerda(±180°) → base(+90°)
-  function valToAngle(v){ return -90-(v/4)*180; } // graus — vai pela esquerda
-  function angleToRad(deg){ return deg * Math.PI/180; }
+  const arcPath = describeArc(CX, CY, R, START_A, END_A);
 
-  // Ponto no arco para um valor 0..4
-  function valToXY(v){
-    let a = angleToRad(valToAngle(v));
-    return {
-      x: ARC_R + ARC_R*Math.cos(a),  // cos(-90°)=0 → x=ARC_R (centro), cos(0°)=-ARC_R → esquerda
-      y: ARC_R + ARC_R*Math.sin(a)
-    };
-  }
-
-  // Cria o SVG
-  const W = ARC_R*2, H = ARC_R*2;
   let style=document.createElement('style');
   style.textContent=`
     #usr-wrap{
-      position:fixed;right:${SLIDER_RIGHT}px;top:50%;
-      transform:translateY(-50%);
-      z-index:300;pointer-events:auto;touch-action:none;user-select:none;
+      position:fixed;right:${WRAP_RIGHT}px;top:50%;transform:translateY(-50%);
+      width:${ARC_W}px;height:${ARC_H}px;z-index:300;
+      pointer-events:auto;touch-action:none;user-select:none;
+      display:flex;align-items:center;justify-content:center;
     }
-    #usr-svg{ overflow:visible;display:block; }
-    #usr-arc-bg{ fill:none;stroke:var(--s-line,rgba(255,255,255,0.15));stroke-width:1; }
-    #usr-arc-fill{ fill:none;stroke:var(--s-fill,rgba(255,255,255,0.5));stroke-width:1.5;
-      stroke-dasharray:0 1000;transition:stroke-dashoffset .05s; }
-    .usr-dot-el{ cursor:pointer;transition:r .2s; }
-    .usr-dot-el circle.bg{ fill:var(--s-dot,rgba(255,255,255,0.3)); }
-    .usr-dot-el circle.bg.active{ fill:var(--s-dot-active,rgba(255,255,255,0.95)); }
-    #usr-thumb-el{ pointer-events:none; }
-    #usr-thumb-el circle{ fill:var(--s-thumb,#fff);
-      filter:drop-shadow(0 1px 4px rgba(0,0,0,0.4)); }
-    #usr-hit{ fill:transparent;cursor:pointer; }
+    #usr-arc{
+      position:relative;width:${ARC_W}px;height:${ARC_H}px;
+      overflow:visible;cursor:pointer;
+    }
+    #usr-arc svg{width:100%;height:100%;display:block;overflow:visible;}
+    #usr-arc .arc-bg{
+      fill:none;stroke:var(--s-line,rgba(255,255,255,0.12));stroke-width:1.25;
+      transition:stroke .45s ease;
+    }
+    #usr-arc .arc-fill{
+      fill:none;stroke:var(--s-fill,rgba(255,255,255,0.45));stroke-width:1.75;
+      stroke-linecap:round;transition:stroke .45s ease,opacity .3s ease;
+    }
+    #usr-arc .arc-dot{
+      fill:var(--s-dot,rgba(255,255,255,0.22));
+      transition:fill .3s ease,transform .3s ease,r .3s ease;
+      transform-box:fill-box;transform-origin:center;
+    }
+    #usr-arc .arc-dot.active{ fill:var(--s-dot-active,rgba(255,255,255,0.92)); }
+    #usr-arc .arc-thumb{
+      fill:var(--s-thumb,#fff);
+      filter:drop-shadow(0 2px 8px rgba(0,0,0,0.28));
+      transition:fill .45s ease;
+    }
+    #usr-arc .arc-thumb-ring{
+      fill:none;stroke:var(--s-thumb-ring,rgba(255,255,255,0.25));stroke-width:1.5;
+      transition:stroke .45s ease;
+    }
+    .usr-item{
+      position:absolute;display:flex;align-items:center;gap:10px;
+      transform:translate(-50%,-50%);pointer-events:none;
+      color:var(--s-label,rgba(255,255,255,0.35));
+      transition:color .3s ease,opacity .3s ease,transform .3s ease;
+      opacity:.72;
+    }
+    .usr-item.active{
+      color:var(--s-label-active,rgba(255,255,255,0.96));
+      opacity:1;
+    }
+    .usr-item.active .usr-icon{ transform:scale(1.08); }
+    .usr-item.active .usr-index{ letter-spacing:0.02em; }
+    .usr-icon{ width:22px;height:22px;display:block;flex:0 0 auto; transition:transform .25s ease; }
+    .usr-icon svg{ width:100%;height:100%;overflow:visible; }
+    .usr-icon circle,.usr-icon path,.usr-icon line,.usr-icon ellipse{
+      stroke:currentColor; fill:none; stroke-width:1.9; stroke-linecap:round; stroke-linejoin:round;
+    }
+    .usr-index{
+      font:600 18px/1.05 Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      font-variant-numeric:tabular-nums; letter-spacing:-0.02em;
+    }
+    @media (max-width: 900px){
+      #usr-wrap{ right:8px; transform:translateY(-50%) scale(.88); transform-origin:right center; }
+    }
+    @media (max-width: 640px){
+      #usr-wrap{ transform:translateY(-50%) scale(.72); }
+    }
   `;
   document.head.appendChild(style);
 
-  let wrap=document.createElement('div');wrap.id='usr-wrap';document.body.appendChild(wrap);
+  let wrap=document.createElement('div');
+  wrap.id='usr-wrap';
+  document.body.appendChild(wrap);
 
-  // Monta SVG
-  const ns='http://www.w3.org/2000/svg';
-  let svg=document.createElementNS(ns,'svg');
-  svg.id='usr-svg';
-  svg.setAttribute('width', W);
-  svg.setAttribute('height', H);
-  svg.setAttribute('viewBox',`0 0 ${W} ${H}`);
-  wrap.appendChild(svg);
+  let arc=document.createElement('div');
+  arc.id='usr-arc';
+  wrap.appendChild(arc);
 
-  // Arco de fundo
-  // Caminho: semicírculo do topo (ARC_R, 0) até a base (ARC_R, 2*ARC_R) pela esquerda
-  // SVG arc: large-arc=1, sweep=0 (anti-horário)
-  let arcPath=`M ${ARC_R} ${0} A ${ARC_R} ${ARC_R} 0 1 0 ${ARC_R} ${H}`;
+  arc.innerHTML=`
+    <svg viewBox="0 0 ${ARC_W} ${ARC_H}" aria-hidden="true">
+      <path class="arc-bg" d="${arcPath}"></path>
+      <path class="arc-fill" d="${arcPath}"></path>
+      <g class="arc-points"></g>
+      <circle class="arc-thumb-ring" cx="0" cy="0" r="9.5"></circle>
+      <circle class="arc-thumb" cx="0" cy="0" r="4.8"></circle>
+    </svg>
+  `;
 
-  let arcBg=document.createElementNS(ns,'path');
-  arcBg.id='usr-arc-bg';
-  arcBg.setAttribute('d',arcPath);
-  svg.appendChild(arcBg);
+  const svg=arc.querySelector('svg');
+  const fillPath=arc.querySelector('.arc-fill');
+  const pointsGroup=arc.querySelector('.arc-points');
+  const thumb=arc.querySelector('.arc-thumb');
+  const thumbRing=arc.querySelector('.arc-thumb-ring');
+  const dotEls=[];
+  const itemEls=[];
+  const pathLength=fillPath.getTotalLength();
 
-  let arcFill=document.createElementNS(ns,'path');
-  arcFill.id='usr-arc-fill';
-  arcFill.setAttribute('d',arcPath);
-  svg.appendChild(arcFill);
+  fillPath.style.strokeDasharray=`${pathLength} ${pathLength}`;
+  fillPath.style.strokeDashoffset=pathLength;
 
-  // Comprimento do arco (semicírculo = π*r)
-  const ARC_LEN = Math.PI * ARC_R;
-  arcFill.style.strokeDasharray=`0 ${ARC_LEN}`;
-
-  // Área de hit invisível
-  let hit=document.createElementNS(ns,'path');
-  hit.id='usr-hit';
-  hit.setAttribute('d',arcPath);
-  hit.setAttribute('stroke-width','28');
-  hit.setAttribute('stroke','transparent');
-  hit.setAttribute('fill','none');
-  svg.appendChild(hit);
-
-  // 5 dots nos presets
-  let dotEls=[];
   for(let i=0;i<5;i++){
-    let pt=valToXY(i);
-    let g=document.createElementNS(ns,'g');
-    g.classList.add('usr-dot-el');
-    let c=document.createElementNS(ns,'circle');
-    c.classList.add('bg');
-    c.setAttribute('cx',pt.x);c.setAttribute('cy',pt.y);c.setAttribute('r','4');
-    g.appendChild(c);
-    svg.appendChild(g);
-    dotEls.push({g,c});
+    const t=i/4;
+    const pt=pointOnArc(t);
+
+    const dot=document.createElementNS('http://www.w3.org/2000/svg','circle');
+    dot.setAttribute('class','arc-dot');
+    dot.setAttribute('cx',pt.x);
+    dot.setAttribute('cy',pt.y);
+    dot.setAttribute('r',i===0||i===4?2.5:3.2);
+    pointsGroup.appendChild(dot);
+    dotEls.push(dot);
+
+    const item=document.createElement('div');
+    item.className='usr-item';
+    item.style.left=(pt.x+34)+'px';
+    item.style.top=pt.y+'px';
+    item.innerHTML=`
+      <span class="usr-icon">${buildAbstractIcon(ICONS[i % ICONS.length])}</span>
+      <span class="usr-index">${String(i+1).padStart(2,'0')}</span>
+    `;
+    arc.appendChild(item);
+    itemEls.push(item);
   }
 
-  // Thumb
-  let thumbG=document.createElementNS(ns,'g');thumbG.id='usr-thumb-el';
-  let thumbC=document.createElementNS(ns,'circle');
-  thumbC.setAttribute('r','7');
-  thumbG.appendChild(thumbC);svg.appendChild(thumbG);
+  function pointOnArc(t){
+    const a=START_A+(END_A-START_A)*t;
+    return { x: CX + Math.cos(a)*R, y: CY + Math.sin(a)*R, angle:a };
+  }
 
-  let _val=0;
+  function clientToValue(clientX,clientY){
+    const rect=arc.getBoundingClientRect();
+    const x=clientX-rect.left;
+    const y=clientY-rect.top;
+    const dx=x-CX;
+    const dy=y-CY;
+    let ang=Math.atan2(dy,dx);
+    if(ang<START_A) ang=START_A;
+    if(ang>END_A) ang=END_A;
+    return ((ang-START_A)/(END_A-START_A))*4;
+  }
+
   let _dragging=false;
+  let _curVal=0;
 
-  function setVal(v,doInit){
-    _val=Math.max(0,Math.min(4,v));
-    SCENE_POS=_val;
+  function setVal(v, doInit){
+    _curVal=Math.max(0,Math.min(4,v));
+    SCENE_POS=_curVal;
+    const t=_curVal/4;
+    const pt=pointOnArc(t);
 
-    // thumb position
-    let pt=valToXY(_val);
-    thumbG.setAttribute('transform',`translate(${pt.x},${pt.y})`);
+    thumb.setAttribute('cx',pt.x);
+    thumb.setAttribute('cy',pt.y);
+    thumbRing.setAttribute('cx',pt.x);
+    thumbRing.setAttribute('cy',pt.y);
+    fillPath.style.strokeDashoffset=pathLength*(1-t);
 
-    // arc fill: stroke-dasharray len = pct * ARC_LEN
-    let pct=_val/4;
-    arcFill.style.strokeDasharray=`${pct*ARC_LEN} ${ARC_LEN}`;
-
-    // dots
     dotEls.forEach((d,i)=>{
-      let active=Math.abs(_val-i)<0.07;
-      d.c.classList.toggle('active',active);
-      d.c.setAttribute('r', active?'6':'4');
+      d.classList.toggle('active',Math.abs(_curVal-i)<0.08);
+      d.setAttribute('r',Math.abs(_curVal-i)<0.08 ? 4.5 : (i===0||i===4?2.5:3.2));
+    });
+    itemEls.forEach((el,i)=>{
+      const active=Math.abs(_curVal-i)<0.08;
+      el.classList.toggle('active',active);
+      el.style.transform=active ? 'translate(-50%,-50%) scale(1.02)' : 'translate(-50%,-50%) scale(1)';
     });
 
-    applyScenePos(_val,doInit||false);
+    applyScenePos(_curVal,doInit||false);
     if(window._refreshAllSliders) window._refreshAllSliders();
     if(_dragging && window._updateSliderTheme) window._updateSliderTheme(true);
   }
 
-  // Converte posição do mouse → ângulo → valor 0..4
-  function xyToVal(clientX,clientY){
-    let rect=svg.getBoundingClientRect();
-    let cx=rect.left+ARC_R, cy=rect.top+ARC_R;
-    let dx=clientX-cx, dy=clientY-cy;
-    let angleDeg=Math.atan2(dy,dx)*180/Math.PI; // -180..+180
-    // Arco vai de -90 (topo) até +90 (base) passando por ±180 (esquerda)
-    let norm;
-    if(angleDeg<=-90){
-      norm=(-90-angleDeg)/180;       // -90→0, -180→0.5
-    } else if(angleDeg>=90){
-      norm=0.5+(180-angleDeg)/180;   // +180→0.5, +90→1
-    } else {
-      norm=angleDeg<0?0:1;           // lado direito → snap ao extremo
-    }
-    return Math.max(0,Math.min(4,norm*4));
-  }
-
-  // Snap para preset mais próximo se perto
-  function snapIfClose(v){
-    let nearest=Math.round(v);
-    return Math.abs(v-nearest)<0.25 ? nearest : v;
-  }
-
-  hit.addEventListener('pointerdown',e=>{
+  arc.addEventListener('pointerdown',e=>{
     _dragging=true;
-    hit.setPointerCapture(e.pointerId);
-    let v=snapIfClose(xyToVal(e.clientX,e.clientY));
-    setVal(v);
+    arc.setPointerCapture(e.pointerId);
+    const hitIndex=findNearestPreset(e.clientX,e.clientY);
+    setVal(hitIndex!==null ? hitIndex : clientToValue(e.clientX,e.clientY));
     e.preventDefault();
   });
-  hit.addEventListener('pointermove',e=>{
+  arc.addEventListener('pointermove',e=>{
     if(!_dragging) return;
-    setVal(snapIfClose(xyToVal(e.clientX,e.clientY)));
+    setVal(clientToValue(e.clientX,e.clientY));
   });
-  hit.addEventListener('pointerup',  ()=>_dragging=false);
-  hit.addEventListener('pointercancel',()=>_dragging=false);
+  arc.addEventListener('pointerup',()=>_dragging=false);
+  arc.addEventListener('pointercancel',()=>_dragging=false);
 
-  // Clique nos dots → crava no preset
-  dotEls.forEach((d,i)=>{
-    d.g.style.pointerEvents='all';
-    d.g.addEventListener('pointerdown',e=>{
-      e.stopPropagation();
-      setVal(i);
-    });
-  });
+  function findNearestPreset(clientX,clientY){
+    const rect=arc.getBoundingClientRect();
+    const x=clientX-rect.left;
+    const y=clientY-rect.top;
+    let best=null;
+    for(let i=0;i<5;i++){
+      const pt=pointOnArc(i/4);
+      const labelX=pt.x+34;
+      const dx=x-labelX;
+      const dy=y-pt.y;
+      const dd=Math.sqrt(dx*dx+dy*dy);
+      if(dd<24){ best=i; break; }
+      const dd2=Math.sqrt((x-pt.x)*(x-pt.x)+(y-pt.y)*(y-pt.y));
+      if(dd2<18){ best=i; break; }
+    }
+    return best;
+  }
 
-  // Init
-  setVal(0);
-
-  // ── Tema adaptativo ────────────────────────────────────────────────────────
   let _lastTheme='';
   window._updateSliderTheme=function(force){
     let lum=0.299*BG_COLOR[0]+0.587*BG_COLOR[1]+0.114*BG_COLOR[2];
@@ -404,21 +435,53 @@ function buildUserSlider(){
     let r=document.documentElement;
     if(theme==='light'){
       r.style.setProperty('--s-line',       'rgba(0,0,0,0.10)');
-      r.style.setProperty('--s-fill',       'rgba(0,0,0,0.45)');
+      r.style.setProperty('--s-fill',       'rgba(0,0,0,0.38)');
       r.style.setProperty('--s-dot',        'rgba(0,0,0,0.20)');
-      r.style.setProperty('--s-dot-active', 'rgba(0,0,0,0.80)');
+      r.style.setProperty('--s-dot-active', 'rgba(0,0,0,0.88)');
       r.style.setProperty('--s-thumb',      '#111');
+      r.style.setProperty('--s-thumb-ring', 'rgba(0,0,0,0.14)');
+      r.style.setProperty('--s-label',      'rgba(0,0,0,0.24)');
+      r.style.setProperty('--s-label-active','rgba(0,0,0,0.9)');
     } else {
-      r.style.setProperty('--s-line',       'rgba(255,255,255,0.13)');
-      r.style.setProperty('--s-fill',       'rgba(255,255,255,0.50)');
-      r.style.setProperty('--s-dot',        'rgba(255,255,255,0.30)');
-      r.style.setProperty('--s-dot-active', 'rgba(255,255,255,0.92)');
+      r.style.setProperty('--s-line',       'rgba(255,255,255,0.14)');
+      r.style.setProperty('--s-fill',       'rgba(255,255,255,0.52)');
+      r.style.setProperty('--s-dot',        'rgba(255,255,255,0.22)');
+      r.style.setProperty('--s-dot-active', 'rgba(255,255,255,0.96)');
       r.style.setProperty('--s-thumb',      '#fff');
+      r.style.setProperty('--s-thumb-ring', 'rgba(255,255,255,0.22)');
+      r.style.setProperty('--s-label',      'rgba(255,255,255,0.30)');
+      r.style.setProperty('--s-label-active','rgba(255,255,255,0.96)');
     }
     try{window.parent.postMessage({fidenzaTheme:theme},'*');}catch(e){}
   };
 
   setInterval(()=>{ if(!_dragging&&window._updateSliderTheme) window._updateSliderTheme(); },500);
+  setVal(0,false);
+
+  function polarToCartesian(cx, cy, r, angle){
+    return { x: cx + Math.cos(angle) * r, y: cy + Math.sin(angle) * r };
+  }
+  function describeArc(cx, cy, r, startAngle, endAngle){
+    const start = polarToCartesian(cx, cy, r, startAngle);
+    const end = polarToCartesian(cx, cy, r, endAngle);
+    const largeArcFlag = (endAngle - startAngle) <= Math.PI ? 0 : 1;
+    return `M ${start.x} ${start.y} A ${r} ${r} 0 ${largeArcFlag} 1 ${end.x} ${end.y}`;
+  }
+  function buildAbstractIcon(type){
+    switch(type){
+      case 'slash':
+        return `<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="8"></circle><line x1="8" y1="16" x2="16" y2="8"></line></svg>`;
+      case 'double':
+        return `<svg viewBox="0 0 24 24"><circle cx="9" cy="12" r="5"></circle><circle cx="15" cy="12" r="5"></circle></svg>`;
+      case 'split':
+        return `<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="8"></circle><path d="M12 4 C10 8, 10 16, 12 20"></path></svg>`;
+      case 'orbit':
+        return `<svg viewBox="0 0 24 24"><ellipse cx="12" cy="12" rx="8" ry="5"></ellipse><circle cx="16.5" cy="10.2" r="1.4" fill="currentColor" stroke="none"></circle></svg>`;
+      case 'tilt':
+      default:
+        return `<svg viewBox="0 0 24 24"><path d="M6 16 L12 8 L18 16"></path><line x1="8" y1="18" x2="16" y2="18"></line></svg>`;
+    }
+  }
 }
 
 // ── PAINEL DE EDIÇÃO (?edit=true) ──────────────────────────────────────────────
