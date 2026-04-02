@@ -218,7 +218,7 @@ function buildUserSlider(){
   //const ARC_H = 620;
   const ARC_H = window.innerHeight * 0.2;
   const WRAP_RIGHT = 1;
-  const R = 780;
+  const R = 1200;
   const CX = ARC_W + 620;
   const CY = ARC_H / 2;
   const START_A = Math.PI + 0.43;
