@@ -215,7 +215,7 @@ function hexToRgb(h){return{r:parseInt(h.slice(1,3),16),g:parseInt(h.slice(3,5),
 // ── SLIDER DO USUÁRIO ──────────────────────────────────────────────────────────
 function buildUserSlider(){
   const SLIDER_W = Math.min(440, Math.max(330, window.innerWidth * 0.31));
-  const SLIDER_H = 76;
+  const SLIDER_H = 64;
   const PADDING_X = 38;
   const WRAP_TOP = Math.max(82, window.innerHeight * 0.13);
   const ICONS = ['spark','double','split','orbit','tilt'];
@@ -290,13 +290,13 @@ function buildUserSlider(){
     }
     #usr-arc .track-bg{
       fill:none;
-      stroke:var(--s-line,rgba(255,255,255,0.18));
-      stroke-width:1.25;
+      stroke:var(--s-line,rgba(255,255,255,0.28));
+      stroke-width:1.55;
     }
     #usr-arc .track-fill{
       fill:none;
       stroke:var(--s-fill,rgba(255,255,255,0.95));
-      stroke-width:2.2;
+      stroke-width:2.6;
       stroke-linecap:round;
       transition:stroke .35s ease;
     }
@@ -429,32 +429,11 @@ function buildUserSlider(){
     dot.setAttribute('class','tick-dot');
     dot.setAttribute('cx',pt.x);
     dot.setAttribute('cy',pt.y);
-    dot.setAttribute('r',2.8);
+    dot.setAttribute('r',3.4);
     pointsGroup.appendChild(dot);
     dotEls.push(dot);
 
-    const item=document.createElement('div');
-    item.className='usr-item';
-
-    if(idx===0){
-      item.style.left=Math.max(18, pt.x - 6)+'px';
-      item.style.top=(TRACK_Y - 18)+'px';
-      item.style.transform='translate(0,-50%)';
-    } else if(idx===4){
-      item.style.left=Math.min(SLIDER_W - 18, pt.x + 6)+'px';
-      item.style.top=(TRACK_Y - 18)+'px';
-      item.style.transform='translate(-100%,-50%)';
-    } else {
-      item.style.left=pt.x+'px';
-      item.style.top=(TRACK_Y - 18)+'px';
-    }
-
-    item.innerHTML=`
-      <span class="usr-icon">${buildAbstractIcon(ICONS[idx % ICONS.length])}</span>
-      <span class="usr-index">${String(idx+1).padStart(2,'0')}</span>
-    `;
-    arc.appendChild(item);
-    itemEls.push(item);
+    itemEls.push(null);
   });
 
   function pointOnTrack(t){
@@ -497,21 +476,10 @@ function buildUserSlider(){
     dotEls.forEach((d,i)=>{
       const active=Math.abs(_curVal-i)<0.16;
       d.classList.toggle('active',active);
-      d.setAttribute('r',active ? 4.8 : 2.8);
+      d.setAttribute('r',active ? 5.8 : 3.4);
     });
 
-    itemEls.forEach((el,i)=>{
-      const active=Math.abs(_curVal-i)<0.16;
-      el.classList.toggle('active',active);
-
-      if(i===0){
-        el.style.transform = active ? 'translate(0,-50%) scale(1.03)' : 'translate(0,-50%) scale(1)';
-      } else if(i===4){
-        el.style.transform = active ? 'translate(-100%,-50%) scale(1.03)' : 'translate(-100%,-50%) scale(1)';
-      } else {
-        el.style.transform = active ? 'translate(-50%,-50%) scale(1.03)' : 'translate(-50%,-50%) scale(1)';
-      }
-    });
+    // sem labels
 
     applyScenePos(_curVal,doInit||false);
     if(window._refreshAllSliders) window._refreshAllSliders();
