@@ -214,12 +214,11 @@ function hexToRgb(h){return{r:parseInt(h.slice(1,3),16),g:parseInt(h.slice(3,5),
 
 // ── SLIDER DO USUÁRIO ──────────────────────────────────────────────────────────
 function buildUserSlider(){
-  const SLIDER_W = Math.min(430, Math.max(320, window.innerWidth * 0.30));
+  const SLIDER_W = Math.min(440, Math.max(330, window.innerWidth * 0.31));
   const SLIDER_H = 76;
-  const PADDING_X = 28;
+  const PADDING_X = 38;
   const WRAP_TOP = Math.max(82, window.innerHeight * 0.13);
-  const WRAP_LEFT = window.innerWidth * 0.55;
-  const ICONS = ['slash','double','split','orbit','tilt'];
+  const ICONS = ['spark','double','split','orbit','tilt'];
 
   const HINT_FORWARD_MS = 3000;
   const HINT_BACK_MS = 1000;
@@ -231,7 +230,7 @@ function buildUserSlider(){
   style.textContent=`
     #usr-wrap{
       position:fixed;
-      left:${WRAP_LEFT}px;
+      left:50%;
       top:${WRAP_TOP}px;
       transform:translateX(-50%);
       width:${SLIDER_W}px;
@@ -309,16 +308,33 @@ function buildUserSlider(){
     #usr-arc .tick-dot.active{
       fill:var(--s-dot-active,rgba(255,255,255,1));
     }
+    #usr-arc .thumb-ring,
+    #usr-arc .thumb{
+      transform-box: fill-box;
+      transform-origin:center;
+      transition:
+        transform .34s cubic-bezier(.22,.8,.22,1),
+        fill .34s ease,
+        stroke .34s ease,
+        cx .32s cubic-bezier(.22,.8,.22,1),
+        cy .32s cubic-bezier(.22,.8,.22,1);
+    }
     #usr-arc .thumb-ring{
       fill:none;
       stroke:var(--s-thumb-ring,rgba(255,255,255,0.35));
       stroke-width:1.2;
-      transition:stroke .35s ease;
     }
     #usr-arc .thumb{
       fill:var(--s-thumb,#fff);
       filter:drop-shadow(0 2px 8px rgba(0,0,0,0.22));
-      transition:fill .35s ease, r .28s ease, transform .28s ease;
+    }
+    #usr-arc .thumb.moving{
+      fill:var(--s-thumb-active,#E6FF3F);
+      transform:scale(1.72);
+    }
+    #usr-arc .thumb-ring.moving{
+      stroke:var(--s-thumb-ring-active,rgba(230,255,63,0.45));
+      transform:scale(1.42);
     }
     .usr-item{
       position:absolute;
@@ -347,7 +363,7 @@ function buildUserSlider(){
     }
     .usr-item.active .usr-icon{ transform:scale(1.06); }
     .usr-icon svg{ width:100%; height:100%; overflow:visible; }
-    .usr-icon circle,.usr-icon path,.usr-icon line,.usr-icon ellipse{
+    .usr-icon circle,.usr-icon path,.usr-icon line,.usr-icon ellipse,.usr-icon polyline{
       stroke:currentColor; fill:none; stroke-width:1.6; stroke-linecap:round; stroke-linejoin:round;
     }
     .usr-index{
@@ -358,7 +374,7 @@ function buildUserSlider(){
     @media (max-width: 900px){
       #usr-wrap{
         left:50%;
-        top:${max(70, int(0.12*900))}px;
+        top:108px;
         transform:translateX(-50%) scale(.92);
         transform-origin:center top;
       }
@@ -393,7 +409,7 @@ function buildUserSlider(){
       <line class="track-fill" x1="${TRACK_START_X}" y1="${TRACK_Y}" x2="${TRACK_START_X}" y2="${TRACK_Y}"></line>
       <g class="track-points"></g>
       <circle class="thumb-ring" cx="${TRACK_START_X}" cy="${TRACK_Y}" r="10"></circle>
-      <circle class="thumb" cx="${TRACK_START_X}" cy="${TRACK_Y}" r="4.4"></circle>
+      <circle class="thumb" cx="${TRACK_START_X}" cy="${TRACK_Y}" r="4.6"></circle>
     </svg>
   `;
 
@@ -419,8 +435,20 @@ function buildUserSlider(){
 
     const item=document.createElement('div');
     item.className='usr-item';
-    item.style.left=pt.x+'px';
-    item.style.top=(TRACK_Y - 18)+'px';
+
+    if(idx===0){
+      item.style.left=Math.max(18, pt.x - 6)+'px';
+      item.style.top=(TRACK_Y - 18)+'px';
+      item.style.transform='translate(0,-50%)';
+    } else if(idx===4){
+      item.style.left=Math.min(SLIDER_W - 18, pt.x + 6)+'px';
+      item.style.top=(TRACK_Y - 18)+'px';
+      item.style.transform='translate(-100%,-50%)';
+    } else {
+      item.style.left=pt.x+'px';
+      item.style.top=(TRACK_Y - 18)+'px';
+    }
+
     item.innerHTML=`
       <span class="usr-icon">${buildAbstractIcon(ICONS[idx % ICONS.length])}</span>
       <span class="usr-index">${String(idx+1).padStart(2,'0')}</span>
@@ -445,6 +473,11 @@ function buildUserSlider(){
   let _hintPlaying=true;
   let _hintRAF=null;
 
+  function setThumbMovingState(isMoving){
+    thumb.classList.toggle('moving', isMoving);
+    thumbRing.classList.toggle('moving', isMoving);
+  }
+
   function setVal(v, doInit){
     _curVal=Math.max(0,Math.min(4,v));
     SCENE_POS=_curVal;
@@ -456,12 +489,8 @@ function buildUserSlider(){
     thumbRing.setAttribute('cx',pt.x);
     thumbRing.setAttribute('cy',pt.y);
 
-    const moving = _dragging || _hintPlaying;
-    thumb.setAttribute('r', moving ? 6.8 : 4.4);
-    thumbRing.setAttribute('r', moving ? 13.5 : 10);
-    thumb.style.fill = moving ? THUMB_ACTIVE_COLOR : 'var(--s-thumb,#fff)';
-    thumbRing.style.stroke = moving ? 'rgba(230,255,63,0.45)' : 'var(--s-thumb-ring,rgba(255,255,255,0.35))';
-    
+    setThumbMovingState(_dragging || _hintPlaying);
+
     fillLine.setAttribute('x2', pt.x);
     fillLine.setAttribute('y2', TRACK_Y);
 
@@ -470,10 +499,18 @@ function buildUserSlider(){
       d.classList.toggle('active',active);
       d.setAttribute('r',active ? 4.8 : 2.8);
     });
+
     itemEls.forEach((el,i)=>{
       const active=Math.abs(_curVal-i)<0.16;
       el.classList.toggle('active',active);
-      el.style.transform=active ? 'translate(-50%,-50%) scale(1.03)' : 'translate(-50%,-50%) scale(1)';
+
+      if(i===0){
+        el.style.transform = active ? 'translate(0,-50%) scale(1.03)' : 'translate(0,-50%) scale(1)';
+      } else if(i===4){
+        el.style.transform = active ? 'translate(-100%,-50%) scale(1.03)' : 'translate(-100%,-50%) scale(1)';
+      } else {
+        el.style.transform = active ? 'translate(-50%,-50%) scale(1.03)' : 'translate(-50%,-50%) scale(1)';
+      }
     });
 
     applyScenePos(_curVal,doInit||false);
@@ -485,6 +522,7 @@ function buildUserSlider(){
     _hintPlaying=false;
     if(_hintRAF) cancelAnimationFrame(_hintRAF);
     _hintRAF=null;
+    setThumbMovingState(false);
   }
 
   function easeInOut(t){
@@ -511,14 +549,15 @@ function buildUserSlider(){
     setVal(0,false);
     setTimeout(()=>{
       if(!_hintPlaying) return;
-       animateBetween(0,1,HINT_FORWARD_MS,()=>{
+      animateBetween(0,3,HINT_FORWARD_MS,()=>{
         if(!_hintPlaying) return;
         setTimeout(()=>{
           if(!_hintPlaying) return;
-          animateBetween(1,0,HINT_BACK_MS,()=>{
+          animateBetween(3,0,HINT_BACK_MS,()=>{
             _hintPlaying=false;
             _hintRAF=null;
             setVal(0,false);
+            setThumbMovingState(false);
           });
         },HINT_MIDDLE_DELAY_MS);
       });
@@ -528,22 +567,35 @@ function buildUserSlider(){
   arc.addEventListener('pointerdown',e=>{
     stopHint();
     _dragging=true;
+    setThumbMovingState(true);
     arc.setPointerCapture(e.pointerId);
     const hitIndex=findNearestPreset(e.clientX,e.clientY);
     setVal(hitIndex!==null ? hitIndex : clientToValue(e.clientX));
     e.preventDefault();
   });
+
   arc.addEventListener('pointermove',e=>{
     if(!_dragging) return;
     setVal(clientToValue(e.clientX));
   });
+
   function endDrag(e){
     _dragging=false;
     if(e && arc.hasPointerCapture && arc.hasPointerCapture(e.pointerId)) arc.releasePointerCapture(e.pointerId);
+    setVal(_curVal,false);
+    setTimeout(()=>{
+      if(!_dragging && !_hintPlaying) setThumbMovingState(false);
+    },20);
   }
+
   arc.addEventListener('pointerup',endDrag);
   arc.addEventListener('pointercancel',endDrag);
-  arc.addEventListener('lostpointercapture',()=>_dragging=false);
+  arc.addEventListener('lostpointercapture',()=>{
+    _dragging=false;
+    setTimeout(()=>{
+      if(!_dragging && !_hintPlaying) setThumbMovingState(false);
+    },20);
+  });
 
   function findNearestPreset(clientX,clientY){
     const rect=arc.getBoundingClientRect();
@@ -567,6 +619,7 @@ function buildUserSlider(){
     if(!force&&theme===_lastTheme) return;
     _lastTheme=theme;
     let r=document.documentElement;
+
     if(theme==='light'){
       r.style.setProperty('--s-panel-bg',      'rgba(255,255,255,0.58)');
       r.style.setProperty('--s-panel-stroke',  'rgba(0,0,0,0.08)');
@@ -580,6 +633,8 @@ function buildUserSlider(){
       r.style.setProperty('--s-dot-active',    'rgba(0,0,0,0.9)');
       r.style.setProperty('--s-thumb',         '#111');
       r.style.setProperty('--s-thumb-ring',    'rgba(0,0,0,0.18)');
+      r.style.setProperty('--s-thumb-active',  THUMB_ACTIVE_COLOR);
+      r.style.setProperty('--s-thumb-ring-active', 'rgba(230,255,63,0.52)');
       r.style.setProperty('--s-label',         'rgba(0,0,0,0.55)');
       r.style.setProperty('--s-label-active',  'rgba(0,0,0,0.96)');
     } else {
@@ -595,20 +650,26 @@ function buildUserSlider(){
       r.style.setProperty('--s-dot-active',    'rgba(255,255,255,1)');
       r.style.setProperty('--s-thumb',         '#fff');
       r.style.setProperty('--s-thumb-ring',    'rgba(255,255,255,0.30)');
+      r.style.setProperty('--s-thumb-active',  THUMB_ACTIVE_COLOR);
+      r.style.setProperty('--s-thumb-ring-active', 'rgba(230,255,63,0.52)');
       r.style.setProperty('--s-label',         'rgba(255,255,255,0.76)');
       r.style.setProperty('--s-label-active',  'rgba(255,255,255,1)');
     }
+
     try{window.parent.postMessage({fidenzaTheme:theme},'*');}catch(e){}
   };
 
-  setInterval(()=>{ if(!_dragging&&window._updateSliderTheme) window._updateSliderTheme(); },500);
+  setInterval(()=>{
+    if(!_dragging&&window._updateSliderTheme) window._updateSliderTheme();
+  },500);
+
   setVal(0,false);
   playHint();
 
   function buildAbstractIcon(type){
     switch(type){
-      case 'slash':
-        return `<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="8"></circle><line x1="8" y1="16" x2="16" y2="8"></line></svg>`;
+      case 'spark':
+        return `<svg viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="9"></line><line x1="12" y1="15" x2="12" y2="19"></line><line x1="5" y1="12" x2="9" y2="12"></line><line x1="15" y1="12" x2="19" y2="12"></line><polyline points="9.2,9.2 12,7 14.8,9.2 17,12 14.8,14.8 12,17 9.2,14.8 7,12 9.2,9.2"></polyline></svg>`;
       case 'double':
         return `<svg viewBox="0 0 24 24"><circle cx="9" cy="12" r="5"></circle><circle cx="15" cy="12" r="5"></circle></svg>`;
       case 'split':
