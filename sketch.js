@@ -216,7 +216,7 @@ function hexToRgb(h){return{r:parseInt(h.slice(1,3),16),g:parseInt(h.slice(3,5),
 function buildUserSlider(){
   const ARC_W = 232;
   //const ARC_H = 620;
-  const ARC_H = window.innerHeight * 0.4;
+  const ARC_H = window.innerHeight * 0.2;
   const WRAP_RIGHT = 1;
   const R = 780;
   const CX = ARC_W + 620;
