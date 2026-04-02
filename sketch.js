@@ -1,4 +1,8 @@
-// FIDENZA EMBED — hover + painel + presets com lerp
+// FIDENZA EMBED — sphere illusion + preset lerp system
+// ?edit=true  → painel completo de edição
+// (sem parâmetro) → slider flutuante de cenas para o usuário
+const EDIT_MODE = new URLSearchParams(window.location.search).get('edit') === 'true';
+
 let CANVAS_W=800,CANVAS_H=800,FIELD_SCALE=0.0018,FIELD_ANGLE=3.14159,FIELD_EVOLUTION=0.0003;
 let REPULSION_RADIUS=30,REPULSION_STRENGTH=0.8,NUM_PARTICLES=800,TRAIL_LENGTH=10;
 let MIN_WIDTH=4,MAX_WIDTH=18,SPEED=4.0,WRAP_EDGES=true;
@@ -22,23 +26,38 @@ function toSphere(x,y){
   return {px:CANVAS_W/2+sx,py:CANVAS_H/2+sy,depth:sz/SPHERE_R};
 }
 
-// ── SISTEMA DE PRESETS COM LERP ────────────────────────────────────────────────
-// Captura todos os parâmetros num snapshot
+// ── PRESETS HARDCODED ──────────────────────────────────────────────────────────
+// Edite esses valores usando ?edit=true e depois exporte via botão "Exportar JSON"
+const SCENE_DEFAULTS = [
+  // Preset 1 — default
+  {FIELD_SCALE:0.0018,FIELD_ANGLE:3.14159,FIELD_EVOLUTION:0.0003,REPULSION_RADIUS:30,REPULSION_STRENGTH:0.8,NUM_PARTICLES:800,TRAIL_LENGTH:10,MIN_WIDTH:4,MAX_WIDTH:18,SPEED:4.0,WRAP_EDGES:true,ATTRACTOR_RADIUS:180,ATTRACTOR_STRENGTH:2.5,ATTRACTOR_DECAY:0.015,ORBIT_DISTANCE:60,FADE_TAIL:true,BG_FADE:false,BG_FADE_ALPHA:20,SAT_MULT:1.0,LIGHT_MULT:1.0,BG_COLOR:[245,240,228],PALETTE:[[210,80,50,0.28],[60,110,190,0.28],[220,185,50,0.16],[190,190,190,0.16],[40,40,40,0.12]],SPHERE_R_PCT:0.38,SPHERE_R_MIN:120,SPHERE_R_MAX:500,ROT_SPEED:0.0013},
+  // Preset 2
+  {FIELD_SCALE:0.0035,FIELD_ANGLE:6.28,FIELD_EVOLUTION:0.0006,REPULSION_RADIUS:15,REPULSION_STRENGTH:0.3,NUM_PARTICLES:400,TRAIL_LENGTH:25,MIN_WIDTH:2,MAX_WIDTH:8,SPEED:2.0,WRAP_EDGES:true,ATTRACTOR_RADIUS:250,ATTRACTOR_STRENGTH:5.0,ATTRACTOR_DECAY:0.01,ORBIT_DISTANCE:40,FADE_TAIL:true,BG_FADE:true,BG_FADE_ALPHA:12,SAT_MULT:0.7,LIGHT_MULT:1.3,BG_COLOR:[20,20,40],PALETTE:[[20,80,140,0.30],[40,140,180,0.25],[80,200,200,0.20],[20,40,80,0.15],[160,220,230,0.10]],SPHERE_R_PCT:0.32,SPHERE_R_MIN:100,SPHERE_R_MAX:400,ROT_SPEED:0.0025},
+  // Preset 3
+  {FIELD_SCALE:0.001,FIELD_ANGLE:1.5,FIELD_EVOLUTION:0.0001,REPULSION_RADIUS:50,REPULSION_STRENGTH:1.5,NUM_PARTICLES:1200,TRAIL_LENGTH:6,MIN_WIDTH:6,MAX_WIDTH:30,SPEED:7.0,WRAP_EDGES:true,ATTRACTOR_RADIUS:120,ATTRACTOR_STRENGTH:1.5,ATTRACTOR_DECAY:0.02,ORBIT_DISTANCE:80,FADE_TAIL:false,BG_FADE:false,BG_FADE_ALPHA:20,SAT_MULT:1.5,LIGHT_MULT:0.9,BG_COLOR:[245,240,228],PALETTE:[[255,50,50,0.25],[50,200,100,0.25],[50,100,255,0.20],[255,200,0,0.20],[200,0,200,0.10]],SPHERE_R_PCT:0.45,SPHERE_R_MIN:150,SPHERE_R_MAX:600,ROT_SPEED:0.0005},
+  // Preset 4
+  {FIELD_SCALE:0.005,FIELD_ANGLE:9.0,FIELD_EVOLUTION:0.001,REPULSION_RADIUS:8,REPULSION_STRENGTH:0.1,NUM_PARTICLES:600,TRAIL_LENGTH:40,MIN_WIDTH:1,MAX_WIDTH:5,SPEED:3.0,WRAP_EDGES:true,ATTRACTOR_RADIUS:300,ATTRACTOR_STRENGTH:8.0,ATTRACTOR_DECAY:0.008,ORBIT_DISTANCE:30,FADE_TAIL:true,BG_FADE:true,BG_FADE_ALPHA:8,SAT_MULT:0.3,LIGHT_MULT:1.5,BG_COLOR:[10,10,10],PALETTE:[[200,200,200,0.35],[150,150,150,0.30],[100,100,100,0.20],[60,60,60,0.10],[240,240,240,0.05]],SPHERE_R_PCT:0.42,SPHERE_R_MIN:130,SPHERE_R_MAX:550,ROT_SPEED:0.002},
+  // Preset 5
+  {FIELD_SCALE:0.0025,FIELD_ANGLE:4.7,FIELD_EVOLUTION:0.0005,REPULSION_RADIUS:20,REPULSION_STRENGTH:0.5,NUM_PARTICLES:900,TRAIL_LENGTH:15,MIN_WIDTH:3,MAX_WIDTH:14,SPEED:5.0,WRAP_EDGES:true,ATTRACTOR_RADIUS:200,ATTRACTOR_STRENGTH:3.5,ATTRACTOR_DECAY:0.012,ORBIT_DISTANCE:55,FADE_TAIL:true,BG_FADE:false,BG_FADE_ALPHA:20,SAT_MULT:1.2,LIGHT_MULT:1.0,BG_COLOR:[245,240,228],PALETTE:[[180,100,40,0.30],[140,80,30,0.25],[200,160,80,0.20],[100,70,40,0.15],[230,200,140,0.10]],SPHERE_R_PCT:0.35,SPHERE_R_MIN:110,SPHERE_R_MAX:450,ROT_SPEED:0.0018}
+];
+
+// Presets editáveis em runtime (inicializados com os defaults hardcoded)
+let SCENE_PRESETS = SCENE_DEFAULTS.map(p=>JSON.parse(JSON.stringify(p)));
+let SCENE_POS = 0;
+
+// ── PRESET FUNCTIONS ───────────────────────────────────────────────────────────
 function captureState(){
   return {
     FIELD_SCALE,FIELD_ANGLE,FIELD_EVOLUTION,
     REPULSION_RADIUS,REPULSION_STRENGTH,
     NUM_PARTICLES,TRAIL_LENGTH,MIN_WIDTH,MAX_WIDTH,SPEED,WRAP_EDGES,
     ATTRACTOR_RADIUS,ATTRACTOR_STRENGTH,ATTRACTOR_DECAY,ORBIT_DISTANCE,
-    FADE_TAIL,BG_FADE,BG_FADE_ALPHA,
-    SAT_MULT,LIGHT_MULT,
+    FADE_TAIL,BG_FADE,BG_FADE_ALPHA,SAT_MULT,LIGHT_MULT,
     BG_COLOR:[...BG_COLOR],
     PALETTE:PALETTE.map(c=>[...c]),
     SPHERE_R_PCT,SPHERE_R_MIN,SPHERE_R_MAX,ROT_SPEED
   };
 }
-
-// Aplica um snapshot ao estado global
 function applyState(s,doInit){
   FIELD_SCALE=s.FIELD_SCALE; FIELD_ANGLE=s.FIELD_ANGLE; FIELD_EVOLUTION=s.FIELD_EVOLUTION;
   REPULSION_RADIUS=s.REPULSION_RADIUS; REPULSION_STRENGTH=s.REPULSION_STRENGTH;
@@ -48,72 +67,56 @@ function applyState(s,doInit){
   ATTRACTOR_DECAY=s.ATTRACTOR_DECAY; ORBIT_DISTANCE=s.ORBIT_DISTANCE;
   FADE_TAIL=s.FADE_TAIL; BG_FADE=s.BG_FADE; BG_FADE_ALPHA=s.BG_FADE_ALPHA;
   SAT_MULT=s.SAT_MULT; LIGHT_MULT=s.LIGHT_MULT;
-  BG_COLOR=[...s.BG_COLOR];
-  PALETTE=s.PALETTE.map(c=>[...c]);
+  BG_COLOR=[...s.BG_COLOR]; PALETTE=s.PALETTE.map(c=>[...c]);
   SPHERE_R_PCT=s.SPHERE_R_PCT; SPHERE_R_MIN=s.SPHERE_R_MIN; SPHERE_R_MAX=s.SPHERE_R_MAX;
-  ROT_SPEED=s.ROT_SPEED;
-  SPHERE_R=calcSphereR();
+  ROT_SPEED=s.ROT_SPEED; SPHERE_R=calcSphereR();
   if(doInit) init();
 }
-
-// Lerp entre dois números
 function lerpN(a,b,t){ return a+(b-a)*t; }
-
-// Lerp entre dois snapshots — retorna novo snapshot interpolado
 function lerpState(a,b,t){
   return {
-    FIELD_SCALE:    lerpN(a.FIELD_SCALE,b.FIELD_SCALE,t),
-    FIELD_ANGLE:    lerpN(a.FIELD_ANGLE,b.FIELD_ANGLE,t),
+    FIELD_SCALE:lerpN(a.FIELD_SCALE,b.FIELD_SCALE,t),
+    FIELD_ANGLE:lerpN(a.FIELD_ANGLE,b.FIELD_ANGLE,t),
     FIELD_EVOLUTION:lerpN(a.FIELD_EVOLUTION,b.FIELD_EVOLUTION,t),
-    REPULSION_RADIUS:   lerpN(a.REPULSION_RADIUS,b.REPULSION_RADIUS,t),
-    REPULSION_STRENGTH: lerpN(a.REPULSION_STRENGTH,b.REPULSION_STRENGTH,t),
-    NUM_PARTICLES:  Math.round(lerpN(a.NUM_PARTICLES,b.NUM_PARTICLES,t)),
-    TRAIL_LENGTH:   Math.round(lerpN(a.TRAIL_LENGTH,b.TRAIL_LENGTH,t)),
-    MIN_WIDTH:      lerpN(a.MIN_WIDTH,b.MIN_WIDTH,t),
-    MAX_WIDTH:      lerpN(a.MAX_WIDTH,b.MAX_WIDTH,t),
-    SPEED:          lerpN(a.SPEED,b.SPEED,t),
-    WRAP_EDGES:     t<0.5?a.WRAP_EDGES:b.WRAP_EDGES,
-    ATTRACTOR_RADIUS:   lerpN(a.ATTRACTOR_RADIUS,b.ATTRACTOR_RADIUS,t),
-    ATTRACTOR_STRENGTH: lerpN(a.ATTRACTOR_STRENGTH,b.ATTRACTOR_STRENGTH,t),
-    ATTRACTOR_DECAY:    lerpN(a.ATTRACTOR_DECAY,b.ATTRACTOR_DECAY,t),
-    ORBIT_DISTANCE:     lerpN(a.ORBIT_DISTANCE,b.ORBIT_DISTANCE,t),
-    FADE_TAIL:  t<0.5?a.FADE_TAIL:b.FADE_TAIL,
-    BG_FADE:    t<0.5?a.BG_FADE:b.BG_FADE,
-    BG_FADE_ALPHA: lerpN(a.BG_FADE_ALPHA,b.BG_FADE_ALPHA,t),
-    SAT_MULT:   lerpN(a.SAT_MULT,b.SAT_MULT,t),
-    LIGHT_MULT: lerpN(a.LIGHT_MULT,b.LIGHT_MULT,t),
-    BG_COLOR:   a.BG_COLOR.map((v,i)=>Math.round(lerpN(v,b.BG_COLOR[i],t))),
-    PALETTE:    a.PALETTE.map((c,i)=>c.map((v,j)=>j<3?Math.round(lerpN(v,b.PALETTE[i][j],t)):lerpN(v,b.PALETTE[i][j],t))),
-    SPHERE_R_PCT: lerpN(a.SPHERE_R_PCT,b.SPHERE_R_PCT,t),
-    SPHERE_R_MIN: lerpN(a.SPHERE_R_MIN,b.SPHERE_R_MIN,t),
-    SPHERE_R_MAX: lerpN(a.SPHERE_R_MAX,b.SPHERE_R_MAX,t),
-    ROT_SPEED:    lerpN(a.ROT_SPEED,b.ROT_SPEED,t)
+    REPULSION_RADIUS:lerpN(a.REPULSION_RADIUS,b.REPULSION_RADIUS,t),
+    REPULSION_STRENGTH:lerpN(a.REPULSION_STRENGTH,b.REPULSION_STRENGTH,t),
+    NUM_PARTICLES:Math.round(lerpN(a.NUM_PARTICLES,b.NUM_PARTICLES,t)),
+    TRAIL_LENGTH:Math.round(lerpN(a.TRAIL_LENGTH,b.TRAIL_LENGTH,t)),
+    MIN_WIDTH:lerpN(a.MIN_WIDTH,b.MIN_WIDTH,t),
+    MAX_WIDTH:lerpN(a.MAX_WIDTH,b.MAX_WIDTH,t),
+    SPEED:lerpN(a.SPEED,b.SPEED,t),
+    WRAP_EDGES:t<0.5?a.WRAP_EDGES:b.WRAP_EDGES,
+    ATTRACTOR_RADIUS:lerpN(a.ATTRACTOR_RADIUS,b.ATTRACTOR_RADIUS,t),
+    ATTRACTOR_STRENGTH:lerpN(a.ATTRACTOR_STRENGTH,b.ATTRACTOR_STRENGTH,t),
+    ATTRACTOR_DECAY:lerpN(a.ATTRACTOR_DECAY,b.ATTRACTOR_DECAY,t),
+    ORBIT_DISTANCE:lerpN(a.ORBIT_DISTANCE,b.ORBIT_DISTANCE,t),
+    FADE_TAIL:t<0.5?a.FADE_TAIL:b.FADE_TAIL,
+    BG_FADE:t<0.5?a.BG_FADE:b.BG_FADE,
+    BG_FADE_ALPHA:lerpN(a.BG_FADE_ALPHA,b.BG_FADE_ALPHA,t),
+    SAT_MULT:lerpN(a.SAT_MULT,b.SAT_MULT,t),
+    LIGHT_MULT:lerpN(a.LIGHT_MULT,b.LIGHT_MULT,t),
+    BG_COLOR:a.BG_COLOR.map((v,i)=>Math.round(lerpN(v,b.BG_COLOR[i],t))),
+    PALETTE:a.PALETTE.map((c,i)=>c.map((v,j)=>j<3?Math.round(lerpN(v,b.PALETTE[i][j],t)):lerpN(v,b.PALETTE[i][j],t))),
+    SPHERE_R_PCT:lerpN(a.SPHERE_R_PCT,b.SPHERE_R_PCT,t),
+    SPHERE_R_MIN:lerpN(a.SPHERE_R_MIN,b.SPHERE_R_MIN,t),
+    SPHERE_R_MAX:lerpN(a.SPHERE_R_MAX,b.SPHERE_R_MAX,t),
+    ROT_SPEED:lerpN(a.ROT_SPEED,b.ROT_SPEED,t)
   };
 }
-
-// 5 slots de preset — inicializados com o estado padrão
-let SCENE_PRESETS = [null,null,null,null,null];
-// Posição atual no eixo 0..4 (entre presets)
-let SCENE_POS = 0;
-
-// Aplica o lerp baseado na posição SCENE_POS
-function applyScenePos(pos, doInit){
-  let i = Math.floor(pos);
-  let t = pos - i;
-  // encontra dois presets vizinhos válidos
-  let a = SCENE_PRESETS[Math.min(i, 4)];
-  let b = SCENE_PRESETS[Math.min(i+1, 4)];
-  if(!a && !b) return;
-  if(!a) { applyState(b, doInit); return; }
-  if(!b || i>=4) { applyState(a, doInit); return; }
-  applyState(lerpState(a, b, t), doInit);
+function applyScenePos(pos,doInit){
+  let i=Math.floor(pos), t=pos-i;
+  let a=SCENE_PRESETS[Math.min(i,4)];
+  let b=SCENE_PRESETS[Math.min(i+1,4)];
+  if(i>=4||t===0){ applyState(a,doInit); return; }
+  applyState(lerpState(a,b,t),doInit);
 }
 
 // ── SETUP / DRAW ───────────────────────────────────────────────────────────────
-function emitTheme(){ var lum=0.299*BG_COLOR[0]+0.587*BG_COLOR[1]+0.114*BG_COLOR[2]; window.parent.postMessage({fidenzaTheme:lum>128?'light':'dark'},'*'); }
-
+function emitTheme(){ var lum=0.299*BG_COLOR[0]+0.587*BG_COLOR[1]+0.114*BG_COLOR[2]; try{window.parent.postMessage({fidenzaTheme:lum>128?'light':'dark'},'*');}catch(e){} }
 function setup(){
   CANVAS_W=window.innerWidth; CANVAS_H=window.innerHeight; SPHERE_R=calcSphereR();
+  // Aplica preset 1 por padrão
+  applyState(SCENE_PRESETS[0], false);
   let cnv=createCanvas(CANVAS_W,CANVAS_H);
   cnv.elt.style.cssText='display:block;position:absolute;top:0;left:0;pointer-events:none;';
   document.addEventListener('mousemove',function(e){
@@ -121,7 +124,8 @@ function setup(){
     attractor.x=e.clientX-r.left; attractor.y=e.clientY-r.top;
     attractor.strength=1.0; attractor.active=true;
   });
-  buildUI();
+  if(EDIT_MODE) buildEditUI();
+  buildUserSlider();
   setTimeout(function(){
     CANVAS_W=window.innerWidth; CANVAS_H=window.innerHeight;
     SPHERE_R=calcSphereR(); resizeCanvas(CANVAS_W,CANVAS_H); init();
@@ -136,14 +140,11 @@ function setup(){
     }
   }).observe(document.body);
 }
-
 let _firstFrame=true;
 function draw(){
   if(_firstFrame){
     let nw=Math.floor(window.innerWidth),nh=Math.floor(window.innerHeight);
-    if(nw>0&&nh>0&&(nw!==CANVAS_W||nh!==CANVAS_H)){
-      CANVAS_W=nw;CANVAS_H=nh;SPHERE_R=calcSphereR();resizeCanvas(CANVAS_W,CANVAS_H);init();
-    }
+    if(nw>0&&nh>0&&(nw!==CANVAS_W||nh!==CANVAS_H)){CANVAS_W=nw;CANVAS_H=nh;SPHERE_R=calcSphereR();resizeCanvas(CANVAS_W,CANVAS_H);init();}
     _firstFrame=false;
   }
   if(BG_FADE){fill(BG_COLOR[0],BG_COLOR[1],BG_COLOR[2],BG_FADE_ALPHA);noStroke();rect(0,0,width,height);}
@@ -153,7 +154,6 @@ function draw(){
   buildSpatialGrid();
   for(let p of particles){p.update();p.draw();}
 }
-
 function init(){ let s=USE_FIXED_SEED?FIXED_SEED:floor(random(999999)); randomSeed(s);noiseSeed(s);particles=[]; for(let i=0;i<NUM_PARTICLES;i++)particles.push(new Particle()); }
 function buildSpatialGrid(){ spatialGrid.cell=max(1,REPULSION_RADIUS);spatialGrid.cells={}; for(let p of particles){let cx=floor(p.x/spatialGrid.cell),cy=floor(p.y/spatialGrid.cell),k=cx+','+cy;if(!spatialGrid.cells[k])spatialGrid.cells[k]=[];spatialGrid.cells[k].push(p);} }
 function fieldAngle(x,y){return noise(x*FIELD_SCALE,y*FIELD_SCALE,frameCount*FIELD_EVOLUTION)*FIELD_ANGLE;}
@@ -211,14 +211,105 @@ class Particle{
     endShape(CLOSE);
   }
 }
-
 function pickColorFromNorm(norm){ let total=PALETTE.reduce((s,c)=>s+c[3],0),acc=0; for(let c of PALETTE){acc+=c[3]/total;if(norm<=acc)return applyColorMods(c);} return applyColorMods(PALETTE[PALETTE.length-1]); }
 function applyColorMods(c){ let r=c[0]/255,g=c[1]/255,b=c[2]/255,mx=Math.max(r,g,b),mn=Math.min(r,g,b),d=mx-mn,h=0,s=0,l=(mx+mn)/2; if(d>0){s=d/(1-Math.abs(2*l-1));if(mx===r)h=((g-b)/d+6)%6;else if(mx===g)h=(b-r)/d+2;else h=(r-g)/d+4;h/=6;} s=Math.min(1,s*SAT_MULT);l=Math.min(1,Math.max(0,l*LIGHT_MULT)); let q=l<0.5?l*(1+s):l+s-l*s,p2=2*l-q; function hue(t){t=(t+1)%1;if(t<1/6)return p2+(q-p2)*6*t;if(t<1/2)return q;if(t<2/3)return p2+(q-p2)*(2/3-t)*6;return p2;} return[Math.round(hue(h+1/3)*255),Math.round(hue(h)*255),Math.round(hue(h-1/3)*255),c[3]]; }
 function rgbToHex(r,g,b){return'#'+[r,g,b].map(v=>v.toString(16).padStart(2,'0')).join('');}
 function hexToRgb(h){return{r:parseInt(h.slice(1,3),16),g:parseInt(h.slice(3,5),16),b:parseInt(h.slice(5,7),16)};}
 
-// ── UI ──────────────────────────────────────────────────────────────────────────
-function buildUI(){
+// ── SLIDER DO USUÁRIO (sempre visível) ─────────────────────────────────────────
+function buildUserSlider(){
+  let style=document.createElement('style');
+  style.textContent=`
+    #user-slider-wrap{
+      position:fixed;right:18px;top:50%;transform:translateY(-50%);
+      z-index:300;display:flex;flex-direction:column;align-items:center;gap:0;
+      pointer-events:auto;touch-action:none;
+    }
+    #user-slider-track{
+      position:relative;width:24px;height:200px;
+      display:flex;flex-direction:column;align-items:center;
+      justify-content:space-between;
+    }
+    #user-slider-line{
+      position:absolute;top:0;bottom:0;left:50%;transform:translateX(-50%);
+      width:2px;background:rgba(0,0,0,0.15);border-radius:1px;
+    }
+    .user-dot{
+      width:10px;height:10px;border-radius:50%;
+      background:rgba(0,0,0,0.25);border:2px solid rgba(0,0,0,0.2);
+      position:relative;z-index:2;flex-shrink:0;cursor:pointer;
+      transition:background .2s,transform .2s;
+    }
+    .user-dot.active{background:rgba(0,0,0,0.7);transform:scale(1.3);}
+    #user-thumb{
+      position:absolute;left:50%;transform:translate(-50%,-50%);
+      width:16px;height:16px;border-radius:50%;
+      background:#fff;border:2px solid rgba(0,0,0,0.5);
+      box-shadow:0 1px 4px rgba(0,0,0,0.25);
+      pointer-events:none;z-index:4;
+    }
+    #user-inp{
+      position:absolute;top:0;left:50%;transform:translateX(-50%);
+      width:40px;height:200px;opacity:0;cursor:pointer;z-index:5;
+      writing-mode:vertical-lr;direction:rtl;
+      -webkit-appearance:slider-vertical;
+    }
+  `;
+  document.head.appendChild(style);
+
+  let wrap=document.createElement('div');wrap.id='user-slider-wrap';document.body.appendChild(wrap);
+  let track=document.createElement('div');track.id='user-slider-track';wrap.appendChild(track);
+  let line=document.createElement('div');line.id='user-slider-line';track.appendChild(line);
+  let thumb=document.createElement('div');thumb.id='user-thumb';track.appendChild(thumb);
+
+  // 5 dots
+  let dotEls=[];
+  for(let i=0;i<5;i++){
+    let dot=document.createElement('div');dot.className='user-dot';
+    dot.onclick=()=>{ inp.value=i; inp.dispatchEvent(new Event('input')); };
+    track.appendChild(dot);dotEls.push(dot);
+  }
+
+  // Slider invisível vertical
+  let inp=document.createElement('input');inp.type='range';inp.id='user-inp';
+  inp.min=0;inp.max=4;inp.step=0.001;inp.value=0;
+  // suporte vertical cross-browser
+  inp.setAttribute('orient','vertical');
+  track.appendChild(inp);
+
+  function update(){
+    let pos=parseFloat(inp.value);
+    SCENE_POS=pos;
+    // posição do thumb: 0=topo, 4=baixo → invertido
+    let pct=pos/4; // 0..1
+    thumb.style.top=(pct*100)+'%';
+    dotEls.forEach((d,i)=>d.classList.toggle('active',Math.abs(pos-i)<0.06));
+    applyScenePos(pos, false);
+    if(window._refreshAllSliders) window._refreshAllSliders();
+  }
+
+  inp.oninput=update;
+
+  // Touch drag direto na track
+  let dragging=false,startY=0,startVal=0;
+  track.addEventListener('pointerdown',e=>{
+    dragging=true; startY=e.clientY; startVal=parseFloat(inp.value);
+    track.setPointerCapture(e.pointerId);
+    e.preventDefault();
+  });
+  track.addEventListener('pointermove',e=>{
+    if(!dragging)return;
+    let dy=e.clientY-startY;
+    let trackH=track.getBoundingClientRect().height;
+    let delta=(dy/trackH)*4;
+    inp.value=Math.max(0,Math.min(4,startVal+delta));
+    update();
+  });
+  track.addEventListener('pointerup',()=>dragging=false);
+}
+
+// ── PAINEL DE EDIÇÃO (?edit=true) ──────────────────────────────────────────────
+function buildEditUI(){
   let style=document.createElement('style');
   style.textContent=`
     #toggle-btn{position:fixed;left:10px;top:50%;transform:translateY(-50%);z-index:200;background:rgba(30,30,30,0.85);color:#eee;border:1px solid #555;padding:6px 12px;cursor:pointer;font-family:monospace;font-size:12px;border-radius:4px;backdrop-filter:blur(4px);writing-mode:vertical-rl;letter-spacing:2px;pointer-events:auto;touch-action:manipulation;}
@@ -235,25 +326,18 @@ function buildUI(){
     .btn-row{display:flex;gap:8px;margin-top:4px;}
     .btn-row button{flex:1;padding:6px;background:#333;color:#eee;border:1px solid #555;cursor:pointer;font-family:monospace;font-size:12px;border-radius:3px;}
     .btn-row button:hover{background:#f0a040;color:#111;}
-    /* ── scene slider ── */
-    #scene-wrap{padding:4px 0 8px;}
-    #scene-track{position:relative;height:32px;display:flex;align-items:center;margin:0 8px;}
-    #scene-line{position:absolute;left:0;right:0;height:2px;background:#444;border-radius:1px;}
-    #scene-dots{position:absolute;left:0;right:0;display:flex;justify-content:space-between;}
-    .scene-dot{width:14px;height:14px;border-radius:50%;border:2px solid #666;background:#222;cursor:pointer;transition:border-color .2s,background .2s;flex-shrink:0;position:relative;z-index:2;}
-    .scene-dot.saved{border-color:#f0a040;background:#f0a040;}
-    .scene-dot.active{border-color:#fff;box-shadow:0 0 0 2px #f0a040;}
-    #scene-slider{position:absolute;left:0;right:0;width:100%;opacity:0;height:32px;cursor:pointer;z-index:3;}
-    #scene-thumb{position:absolute;top:50%;transform:translate(-50%,-50%);width:18px;height:18px;border-radius:50%;background:#fff;border:2px solid #f0a040;pointer-events:none;z-index:4;transition:left .05s;}
-    .scene-save-btn{width:100%;padding:5px;background:#2a2a2a;color:#888;border:1px solid #444;cursor:pointer;font-family:monospace;font-size:10px;border-radius:3px;letter-spacing:1px;}
-    .scene-save-btn:hover{background:#f0a040;color:#111;border-color:#f0a040;}
-    .scene-save-btn.has-preset{color:#f0a040;border-color:#f0a040;}
+    .save-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:4px;margin-top:4px;}
+    .save-btn{padding:5px 2px;background:#2a2a2a;color:#888;border:1px solid #444;cursor:pointer;font-family:monospace;font-size:10px;border-radius:3px;text-align:center;}
+    .save-btn:hover{background:#f0a040;color:#111;border-color:#f0a040;}
+    .save-btn.saved{color:#f0a040;border-color:#f0a040;}
+    #export-btn{width:100%;padding:7px;margin-top:6px;background:#1a3a1a;color:#4f4;border:1px solid #4f4;cursor:pointer;font-family:monospace;font-size:11px;border-radius:3px;letter-spacing:1px;}
+    #export-btn:hover{background:#4f4;color:#111;}
   `;
   document.head.appendChild(style);
 
   let sidebar=document.createElement('div');sidebar.id='ui-sidebar';document.body.appendChild(sidebar);
   panel=document.createElement('div');panel.id='ui-panel';sidebar.appendChild(panel);
-  let btn=document.createElement('button');btn.id='toggle-btn';btn.textContent='☰ PARAMS';
+  let btn=document.createElement('button');btn.id='toggle-btn';btn.textContent='☰ EDIT';
   btn.onclick=()=>sidebar.classList.toggle('open');
   document.body.appendChild(btn);
 
@@ -279,110 +363,48 @@ function buildUI(){
     inp.onchange=()=>set(inp.checked);div.appendChild(lbl);div.appendChild(inp);panel.appendChild(div);
   }
 
-  // ── SCENE SLIDER ────────────────────────────────────────────────────────────
-  sec('Cenas (lerp entre presets)');
-  let sceneWrap=document.createElement('div');sceneWrap.id='scene-wrap';panel.appendChild(sceneWrap);
-
-  // Trilha visual com 5 pontos
-  let track=document.createElement('div');track.id='scene-track';sceneWrap.appendChild(track);
-  let line=document.createElement('div');line.id='scene-line';track.appendChild(line);
-
-  // Thumb visual
-  let thumb=document.createElement('div');thumb.id='scene-thumb';track.appendChild(thumb);
-
-  // Dots
-  let dotsEl=document.createElement('div');dotsEl.id='scene-dots';track.appendChild(dotsEl);
-  let dotEls=[];
-  for(let i=0;i<5;i++){
-    let dot=document.createElement('div');dot.className='scene-dot';
-    dot.title=`Preset ${i+1}`;
-    dot.onclick=()=>{
-      if(SCENE_PRESETS[i]){
-        // clique num dot salvo → vai para essa posição
-        SCENE_POS=i;
-        sceneInp.value=i;
-        updateSceneThumb();
-        applyScenePos(i,true);
-        refreshAllSliders();
-      }
-    };
-    dotsEl.appendChild(dot);
-    dotEls.push(dot);
-  }
-
-  // Slider invisível por cima
-  let sceneInp=document.createElement('input');
-  sceneInp.type='range';sceneInp.id='scene-slider';
-  sceneInp.min=0;sceneInp.max=4;sceneInp.step=0.001;sceneInp.value=0;
-  track.appendChild(sceneInp);
-
-  function updateSceneThumb(){
-    let pct=parseFloat(sceneInp.value)/4;
-    thumb.style.left=(pct*100)+'%';
-    // atualiza dots ativos
-    dotEls.forEach((d,i)=>{
-      d.classList.toggle('saved', !!SCENE_PRESETS[i]);
-      d.classList.toggle('active', Math.abs(parseFloat(sceneInp.value)-i)<0.05);
-    });
-  }
-
-  sceneInp.oninput=()=>{
-    SCENE_POS=parseFloat(sceneInp.value);
-    updateSceneThumb();
-    // só aplica lerp se há pelo menos dois presets adjacentes válidos
-    let i=Math.floor(SCENE_POS);
-    let a=SCENE_PRESETS[Math.min(i,4)];
-    let b=SCENE_PRESETS[Math.min(i+1,4)];
-    if(a||b){
-      applyScenePos(SCENE_POS, false); // sem reinit para suavidade
-      refreshAllSliders();
-    }
-  };
-
-  updateSceneThumb();
-
-  // Botões de salvar preset
+  // ── Seção de presets de cena ──
+  sec('Cenas — salvar preset atual');
+  let saveGrid=document.createElement('div');saveGrid.className='save-grid';panel.appendChild(saveGrid);
   let saveBtns=[];
-  let saveRow=document.createElement('div');saveRow.style.cssText='display:grid;grid-template-columns:repeat(5,1fr);gap:4px;margin-top:6px;';
   for(let i=0;i<5;i++){
-    let sb=document.createElement('button');
-    sb.className='scene-save-btn';
-    sb.textContent=`P${i+1}`;
-    sb.title=`Salvar estado atual no preset ${i+1}`;
+    let sb=document.createElement('button');sb.className='save-btn';sb.textContent=`P${i+1}`;
+    sb.title=`Salvar estado atual como preset ${i+1}`;
     sb.onclick=()=>{
       SCENE_PRESETS[i]=captureState();
-      sb.classList.add('has-preset');
-      sb.textContent=`P${i+1} ✓`;
-      dotEls[i].classList.add('saved');
-      // move o slider para esse preset
-      SCENE_POS=i;
-      sceneInp.value=i;
-      updateSceneThumb();
+      sb.classList.add('saved');sb.textContent=`P${i+1} ✓`;
     };
-    saveRow.appendChild(sb);
-    saveBtns.push(sb);
+    saveGrid.appendChild(sb);saveBtns.push(sb);
   }
-  sceneWrap.appendChild(saveRow);
 
-  // ── PARÂMETROS ──────────────────────────────────────────────────────────────
-  // Guarda refs para poder atualizar os sliders quando lerp muda os valores
+  // Botão exportar JSON
+  let expBtn=document.createElement('button');expBtn.id='export-btn';expBtn.textContent='📋 Exportar JSON dos presets';
+  expBtn.onclick=()=>{
+    let json=JSON.stringify(SCENE_PRESETS,null,2);
+    navigator.clipboard.writeText(json).then(()=>{
+      expBtn.textContent='✓ Copiado!';
+      setTimeout(()=>expBtn.textContent='📋 Exportar JSON dos presets',2000);
+    }).catch(()=>{
+      // fallback: abre janela com o JSON
+      let w=window.open('','_blank');
+      w.document.write('<pre style="font-family:monospace;font-size:12px;padding:20px">'+json+'</pre>');
+    });
+  };
+  panel.appendChild(expBtn);
+
   let _refs={};
-
   sec('Esfera');
   _refs.SPHERE_R_PCT=sliderRef('raio %',()=>SPHERE_R_PCT,v=>{SPHERE_R_PCT=v;SPHERE_R=calcSphereR();},0.1,0.8,0.01);
   _refs.SPHERE_R_MIN=sliderRef('raio min px',()=>SPHERE_R_MIN,v=>{SPHERE_R_MIN=v;SPHERE_R=calcSphereR();},50,400,5);
   _refs.SPHERE_R_MAX=sliderRef('raio max px',()=>SPHERE_R_MAX,v=>{SPHERE_R_MAX=v;SPHERE_R=calcSphereR();},100,800,5);
   _refs.ROT_SPEED=sliderRef('rotação',()=>ROT_SPEED,v=>ROT_SPEED=v,0,0.02,0.0001);
-
   sec('Flow Field');
   _refs.FIELD_SCALE=sliderRef('field scale',()=>FIELD_SCALE,v=>FIELD_SCALE=v,0.0001,0.008,0.0001);
   _refs.FIELD_ANGLE=sliderRef('field angle',()=>FIELD_ANGLE,v=>FIELD_ANGLE=v,0.1,9.0,0.01);
   _refs.FIELD_EVOLUTION=sliderRef('field evolution',()=>FIELD_EVOLUTION,v=>FIELD_EVOLUTION=v,0,0.01,0.0001);
-
   sec('Repulsão');
   _refs.REPULSION_RADIUS=sliderRef('raio',()=>REPULSION_RADIUS,v=>REPULSION_RADIUS=v,1,100,1);
   _refs.REPULSION_STRENGTH=sliderRef('força',()=>REPULSION_STRENGTH,v=>REPULSION_STRENGTH=v,0,3.0,0.05);
-
   sec('Partículas');
   _refs.NUM_PARTICLES=sliderRef('quantidade',()=>NUM_PARTICLES,v=>{NUM_PARTICLES=Math.round(v);init();},10,2000,10);
   _refs.TRAIL_LENGTH=sliderRef('cauda',()=>TRAIL_LENGTH,v=>TRAIL_LENGTH=Math.round(v),5,150,1);
@@ -390,20 +412,16 @@ function buildUI(){
   _refs.MAX_WIDTH=sliderRef('max width',()=>MAX_WIDTH,v=>MAX_WIDTH=v,1,100,0.5);
   _refs.SPEED=sliderRef('speed',()=>SPEED,v=>SPEED=v,0.1,18,0.1);
   chk('wrap edges',()=>WRAP_EDGES,v=>WRAP_EDGES=v);
-
   sec('Atrator');
   _refs.ATTRACTOR_RADIUS=sliderRef('raio',()=>ATTRACTOR_RADIUS,v=>ATTRACTOR_RADIUS=v,10,500,5);
   _refs.ATTRACTOR_STRENGTH=sliderRef('força',()=>ATTRACTOR_STRENGTH,v=>ATTRACTOR_STRENGTH=v,0.1,16.0,0.1);
   _refs.ATTRACTOR_DECAY=sliderRef('decaimento',()=>ATTRACTOR_DECAY,v=>ATTRACTOR_DECAY=v,0.001,0.05,0.001);
   _refs.ORBIT_DISTANCE=sliderRef('raio órbita',()=>ORBIT_DISTANCE,v=>ORBIT_DISTANCE=v,5,300,5);
-
   sec('Estilo');
   sel('draw style',['solid','soft','outlined'],()=>DRAW_STYLE,v=>DRAW_STYLE=v);
-  slider('soft lines',()=>SOFT_LINES,v=>SOFT_LINES=Math.round(v),2,20,1);
   chk('fade tail',()=>FADE_TAIL,v=>FADE_TAIL=v);
   chk('bg fade',()=>BG_FADE,v=>BG_FADE=v);
   _refs.BG_FADE_ALPHA=sliderRef('bg fade alpha',()=>BG_FADE_ALPHA,v=>BG_FADE_ALPHA=v,2,60,1);
-
   sec('Cores');
   let satRef,lightRef;
   {
@@ -412,14 +430,7 @@ function buildUI(){
     let s=document.createElement('select');
     s.style.cssText='background:#333;color:#eee;border:1px solid #555;padding:2px 4px;font-family:monospace;font-size:11px;width:100%;';
     ['— custom —',...Object.keys(PALETTES_PRESET)].forEach(o=>{let op=document.createElement('option');op.value=o;op.textContent=o;s.appendChild(op);});
-    s.onchange=()=>{
-      if(s.value==='— custom —')return;
-      PALETTE=PALETTES_PRESET[s.value].map(c=>[...c]);
-      SAT_MULT=1.0;LIGHT_MULT=1.0;
-      if(satRef){satRef.inp.value=1.0;satRef.val.textContent='1.00';}
-      if(lightRef){lightRef.inp.value=1.0;lightRef.val.textContent='1.00';}
-      rebuildColorEditor();
-    };
+    s.onchange=()=>{if(s.value==='— custom —')return;PALETTE=PALETTES_PRESET[s.value].map(c=>[...c]);SAT_MULT=1.0;LIGHT_MULT=1.0;if(satRef){satRef.inp.value=1.0;satRef.val.textContent='1.00';}if(lightRef){lightRef.inp.value=1.0;lightRef.val.textContent='1.00';}rebuildColorEditor();};
     window._paletteSelect=s;div.appendChild(lbl);div.appendChild(s);panel.appendChild(div);
   }
   satRef=_refs.SAT_MULT=sliderRef('saturação',()=>SAT_MULT,v=>{SAT_MULT=v;if(window._paletteSelect)window._paletteSelect.value='— custom —';},0,2.0,0.05);
@@ -429,10 +440,8 @@ function buildUI(){
     let cp=document.createElement('input');cp.type='color';cp.value=rgbToHex(BG_COLOR[0],BG_COLOR[1],BG_COLOR[2]);
     cp.style.cssText='width:100%;height:24px;border:none;background:none;cursor:pointer;padding:0;';
     cp.oninput=()=>{let rgb=hexToRgb(cp.value);BG_COLOR=[rgb.r,rgb.g,rgb.b];emitTheme();};
-    _refs.BG_COLOR_PICKER=cp;
-    div.appendChild(lbl);div.appendChild(cp);panel.appendChild(div);
+    _refs.BG_COLOR_PICKER=cp;div.appendChild(lbl);div.appendChild(cp);panel.appendChild(div);
   }
-
   let colorEditorEl=document.createElement('div');colorEditorEl.id='color-editor';panel.appendChild(colorEditorEl);
   function rebuildColorEditor(){
     colorEditorEl.innerHTML='';
@@ -464,7 +473,6 @@ function buildUI(){
   }
   rebuildColorEditor();
   window._rebuildColorEditor=rebuildColorEditor;
-
   sec('Seed');
   chk('fixed seed',()=>USE_FIXED_SEED,v=>{USE_FIXED_SEED=v;init();});
   slider('seed',()=>FIXED_SEED,v=>{FIXED_SEED=v;if(USE_FIXED_SEED)init();},1,9999,1);
@@ -472,28 +480,11 @@ function buildUI(){
   let rb=document.createElement('button');rb.textContent='⟳ REINICIAR';rb.onclick=init;
   row.appendChild(rb);panel.appendChild(row);
 
-  // Atualiza todos os sliders da UI para refletir os valores atuais
   function refreshAllSliders(){
-    let map={
-      FIELD_SCALE,FIELD_ANGLE,FIELD_EVOLUTION,
-      REPULSION_RADIUS,REPULSION_STRENGTH,
-      NUM_PARTICLES,TRAIL_LENGTH,MIN_WIDTH,MAX_WIDTH,SPEED,
-      ATTRACTOR_RADIUS,ATTRACTOR_STRENGTH,ATTRACTOR_DECAY,ORBIT_DISTANCE,
-      BG_FADE_ALPHA,SAT_MULT,LIGHT_MULT,
-      SPHERE_R_PCT,SPHERE_R_MIN,SPHERE_R_MAX,ROT_SPEED
-    };
-    for(let k in map){
-      if(_refs[k]){
-        let r=_refs[k];
-        r.inp.value=map[k];
-        let step=parseFloat(r.inp.step);
-        r.val.textContent=map[k].toFixed(step<0.01?4:step<1?2:0);
-      }
-    }
-    // atualiza color picker do fundo
-    if(_refs.BG_COLOR_PICKER) _refs.BG_COLOR_PICKER.value=rgbToHex(BG_COLOR[0],BG_COLOR[1],BG_COLOR[2]);
-    // atualiza editor de paleta
-    if(window._rebuildColorEditor) window._rebuildColorEditor();
+    let map={FIELD_SCALE,FIELD_ANGLE,FIELD_EVOLUTION,REPULSION_RADIUS,REPULSION_STRENGTH,NUM_PARTICLES,TRAIL_LENGTH,MIN_WIDTH,MAX_WIDTH,SPEED,ATTRACTOR_RADIUS,ATTRACTOR_STRENGTH,ATTRACTOR_DECAY,ORBIT_DISTANCE,BG_FADE_ALPHA,SAT_MULT,LIGHT_MULT,SPHERE_R_PCT,SPHERE_R_MIN,SPHERE_R_MAX,ROT_SPEED};
+    for(let k in map){if(_refs[k]){let r=_refs[k];r.inp.value=map[k];let step=parseFloat(r.inp.step);r.val.textContent=map[k].toFixed(step<0.01?4:step<1?2:0);}}
+    if(_refs.BG_COLOR_PICKER)_refs.BG_COLOR_PICKER.value=rgbToHex(BG_COLOR[0],BG_COLOR[1],BG_COLOR[2]);
+    if(window._rebuildColorEditor)window._rebuildColorEditor();
     emitTheme();
   }
   window._refreshAllSliders=refreshAllSliders;
