@@ -216,10 +216,10 @@ function hexToRgb(h){return{r:parseInt(h.slice(1,3),16),g:parseInt(h.slice(3,5),
 function buildUserSlider(){
   const ARC_W = 232;
   //const ARC_H = 620;
-  const ARC_H = window.innerHeight * 0.4;
+  const ARC_H = Math.min(window.innerHeight * 0.3, 620);
   const WRAP_RIGHT = 0;
   const R = 1200;
-  const CX = ARC_W + 620;
+  const CX = ARC_W + ARC_H;
   const CY = ARC_H / 2;
   const START_A = Math.PI + 0.43;
   const END_A = Math.PI - 0.43;
