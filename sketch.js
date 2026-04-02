@@ -214,111 +214,156 @@ function hexToRgb(h){return{r:parseInt(h.slice(1,3),16),g:parseInt(h.slice(3,5),
 
 // ── SLIDER DO USUÁRIO ──────────────────────────────────────────────────────────
 function buildUserSlider(){
-  const ARC_W = 214;
-  const ARC_H = Math.min(window.innerHeight * 0.32, 360);
-  const WRAP_RIGHT = 0;
-  const WRAP_TOP = 36;
-  const R = ARC_H * 1.82;
-  const CX = R + 10;
-  const CY = ARC_H / 2;
-  const START_A = Math.PI + 0.58;
-  const END_A = Math.PI - 0.58;
+  const SLIDER_W = Math.min(430, Math.max(320, window.innerWidth * 0.30));
+  const SLIDER_H = 76;
+  const PADDING_X = 28;
+  const WRAP_TOP = Math.max(82, window.innerHeight * 0.13);
+  const WRAP_LEFT = window.innerWidth * 0.55;
   const ICONS = ['slash','double','split','orbit','tilt'];
-  const LABEL_OFFSET_X = 50;
-
-  const arcPath = describeArc(CX, CY, R, START_A, END_A, 0);
-  const guidePath = describeArc(CX - 12, CY, R - 18, START_A + 0.02, END_A - 0.02, 0);
-  const guidePath2 = describeArc(CX - 24, CY, R - 36, START_A + 0.035, END_A - 0.035, 0);
 
   let style=document.createElement('style');
   style.textContent=`
     #usr-wrap{
-      position:fixed;right:${WRAP_RIGHT}px;top:${WRAP_TOP}%;
-      transform:translateY(-50%);
-      width:${ARC_W}px;height:${ARC_H}px;z-index:300;
-      pointer-events:auto;touch-action:pan-y;user-select:none;
-      display:flex;align-items:center;justify-content:center;
+      position:fixed;
+      left:${WRAP_LEFT}px;
+      top:${WRAP_TOP}px;
+      transform:translateX(-50%);
+      width:${SLIDER_W}px;
+      height:${SLIDER_H}px;
+      z-index:300;
+      pointer-events:auto;
+      touch-action:pan-x;
+      user-select:none;
+      display:flex;
+      align-items:center;
+      justify-content:center;
     }
     #usr-arc{
-      position:relative;width:${ARC_W}px;height:${ARC_H}px;
-      overflow:visible;cursor:pointer;
+      position:relative;
+      width:${SLIDER_W}px;
+      height:${SLIDER_H}px;
+      overflow:visible;
+      cursor:pointer;
+      border-radius:999px;
+      background:var(--s-panel-bg,rgba(255,255,255,0.08));
+      border:1px solid var(--s-panel-stroke,rgba(255,255,255,0.14));
+      box-shadow:
+        0 10px 30px rgba(0,0,0,0.16),
+        inset 0 1px 0 rgba(255,255,255,0.05);
+      backdrop-filter: blur(10px);
+      -webkit-backdrop-filter: blur(10px);
     }
-    #usr-arc svg{width:100%;height:100%;display:block;overflow:visible;}
-    #usr-arc .fill-disc-main{
-      fill:var(--s-disc-main,rgba(255,255,255,0.055));
-      stroke:none;
-      transition:fill .45s ease,opacity .3s ease;
+    #usr-arc::before,
+    #usr-arc::after{
+      content:"";
+      position:absolute;
+      inset:0;
+      border-radius:999px;
+      pointer-events:none;
     }
-    #usr-arc .fill-disc-soft{
-      fill:var(--s-disc-soft,rgba(255,255,255,0.038));
-      stroke:none;filter:blur(22px);
-      transition:fill .45s ease,opacity .3s ease;
+    #usr-arc::before{
+      inset:10px 18px;
+      border:1px dashed var(--s-dash,rgba(255,255,255,0.18));
+      opacity:.65;
     }
-    #usr-arc .fill-disc-small{
-      fill:var(--s-disc-small,rgba(255,255,255,0.028));
-      stroke:none;filter:blur(10px);
-      transition:fill .45s ease,opacity .3s ease;
-    }
-    #usr-arc .arc-bg{
-      fill:none;stroke:var(--s-line,rgba(255,255,255,0.26));stroke-width:1.1;
-      transition:stroke .45s ease;
-    }
-    #usr-arc .arc-fill{
-      fill:none;stroke:var(--s-fill,rgba(255,255,255,0.92));stroke-width:1.8;
-      stroke-linecap:round;transition:stroke .45s ease,opacity .3s ease;
-    }
-    #usr-arc .arc-guide{
-      fill:none;stroke:var(--s-guide,rgba(255,255,255,0.14));stroke-width:1;
-      stroke-dasharray:2 7;stroke-linecap:round;
-      transition:stroke .45s ease,opacity .3s ease;
-    }
-    #usr-arc .arc-guide.secondary{
-      stroke:var(--s-guide-2,rgba(255,255,255,0.1));
-      stroke-dasharray:1.4 8;
-      stroke-width:.95;
-    }
-    #usr-arc .arc-dot{
-      fill:var(--s-dot,rgba(255,255,255,0.34));
-      transition:fill .3s ease,r .25s ease,opacity .25s ease;
+    #usr-arc::after{
+      inset:18px 60px;
+      background:
+        radial-gradient(circle at 28% 50%, var(--s-bubble-1,rgba(255,255,255,0.07)) 0 34px, transparent 35px),
+        radial-gradient(circle at 50% 50%, var(--s-bubble-2,rgba(255,255,255,0.05)) 0 52px, transparent 53px),
+        radial-gradient(circle at 72% 50%, var(--s-bubble-3,rgba(255,255,255,0.06)) 0 30px, transparent 31px);
+      filter: blur(5px);
       opacity:.95;
     }
-    #usr-arc .arc-dot.active{ fill:var(--s-dot-active,rgba(255,255,255,1)); }
-    #usr-arc .arc-thumb{
-      fill:var(--s-thumb,#fff);
-      filter:drop-shadow(0 2px 8px rgba(0,0,0,0.24));
-      transition:fill .45s ease;
+    #usr-arc svg{
+      width:100%;
+      height:100%;
+      display:block;
+      overflow:visible;
+      position:relative;
+      z-index:2;
     }
-    #usr-arc .arc-thumb-ring{
-      fill:none;stroke:var(--s-thumb-ring,rgba(255,255,255,0.3));stroke-width:1.15;
-      transition:stroke .45s ease;
+    #usr-arc .track-bg{
+      fill:none;
+      stroke:var(--s-line,rgba(255,255,255,0.18));
+      stroke-width:1.25;
+    }
+    #usr-arc .track-fill{
+      fill:none;
+      stroke:var(--s-fill,rgba(255,255,255,0.95));
+      stroke-width:2.2;
+      stroke-linecap:round;
+      transition:stroke .35s ease;
+    }
+    #usr-arc .tick-dot{
+      fill:var(--s-dot,rgba(255,255,255,0.34));
+      transition:fill .25s ease,r .25s ease,opacity .25s ease;
+      opacity:.95;
+    }
+    #usr-arc .tick-dot.active{
+      fill:var(--s-dot-active,rgba(255,255,255,1));
+    }
+    #usr-arc .thumb-ring{
+      fill:none;
+      stroke:var(--s-thumb-ring,rgba(255,255,255,0.35));
+      stroke-width:1.2;
+      transition:stroke .35s ease;
+    }
+    #usr-arc .thumb{
+      fill:var(--s-thumb,#fff);
+      filter:drop-shadow(0 2px 8px rgba(0,0,0,0.22));
+      transition:fill .35s ease;
     }
     .usr-item{
-      position:absolute;display:flex;align-items:center;gap:8px;
-      transform:translate(-50%,-50%);pointer-events:none;
-      color:var(--s-label,rgba(255,255,255,0.7));
-      transition:color .3s ease,opacity .3s ease,transform .3s ease;
-      opacity:.96;
+      position:absolute;
+      display:flex;
+      align-items:center;
+      gap:6px;
+      transform:translate(-50%,-50%);
+      pointer-events:none;
+      color:var(--s-label,rgba(255,255,255,0.72));
+      transition:color .25s ease, transform .25s ease, opacity .25s ease;
+      opacity:.95;
       white-space:nowrap;
+      z-index:3;
     }
     .usr-item.active{
       color:var(--s-label-active,rgba(255,255,255,1));
       opacity:1;
     }
-    .usr-item.active .usr-icon{ transform:scale(1.03); }
-    .usr-icon{ width:15px;height:15px;display:block;flex:0 0 auto; opacity:.9; transition:transform .25s ease; }
-    .usr-icon svg{ width:100%;height:100%;overflow:visible; }
+    .usr-icon{
+      width:14px;
+      height:14px;
+      display:block;
+      flex:0 0 auto;
+      opacity:.95;
+      transition:transform .25s ease;
+    }
+    .usr-item.active .usr-icon{ transform:scale(1.06); }
+    .usr-icon svg{ width:100%; height:100%; overflow:visible; }
     .usr-icon circle,.usr-icon path,.usr-icon line,.usr-icon ellipse{
-      stroke:currentColor; fill:none; stroke-width:1.7; stroke-linecap:round; stroke-linejoin:round;
+      stroke:currentColor; fill:none; stroke-width:1.6; stroke-linecap:round; stroke-linejoin:round;
     }
     .usr-index{
-      font:600 18px/1.05 Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-      font-variant-numeric:tabular-nums; letter-spacing:-0.02em;
+      font:600 14px/1 Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      font-variant-numeric:tabular-nums;
+      letter-spacing:-0.01em;
     }
     @media (max-width: 900px){
-      #usr-wrap{ right:0; top:34%; transform:translateY(-50%) scale(.84); transform-origin:right center; }
+      #usr-wrap{
+        left:50%;
+        top:${max(70, int(0.12*900))}px;
+        transform:translateX(-50%) scale(.92);
+        transform-origin:center top;
+      }
     }
     @media (max-width: 640px){
-      #usr-wrap{ top:33%; transform:translateY(-50%) scale(.68); }
+      #usr-wrap{
+        width:min(92vw, 360px);
+        transform:translateX(-50%) scale(.88);
+      }
+      #usr-arc{ height:70px; }
+      .usr-index{ font-size:13px; }
     }
   `;
   document.head.appendChild(style);
@@ -331,57 +376,45 @@ function buildUserSlider(){
   arc.id='usr-arc';
   wrap.appendChild(arc);
 
+  const TRACK_START_X = PADDING_X;
+  const TRACK_END_X = SLIDER_W - PADDING_X;
+  const TRACK_Y = SLIDER_H / 2 + 1;
+  const TRACK_W = TRACK_END_X - TRACK_START_X;
+
   arc.innerHTML=`
-    <svg viewBox="0 0 ${ARC_W} ${ARC_H}" aria-hidden="true">
-      <circle class="fill-disc-soft" cx="${CX}" cy="${CY}" r="${R * 1.01}"></circle>
-      <circle class="fill-disc-main" cx="${CX}" cy="${CY}" r="${R}"></circle>
-      <circle class="fill-disc-small" cx="${CX - R * 0.15}" cy="${CY - ARC_H * 0.18}" r="${R * 0.28}"></circle>
-      <circle class="fill-disc-small" cx="${CX - R * 0.09}" cy="${CY + ARC_H * 0.06}" r="${R * 0.18}"></circle>
-      <circle class="fill-disc-small" cx="${CX - R * 0.20}" cy="${CY + ARC_H * 0.24}" r="${R * 0.11}"></circle>
-      <path class="arc-guide" d="${guidePath}"></path>
-      <path class="arc-guide secondary" d="${guidePath2}"></path>
-      <path class="arc-bg" d="${arcPath}"></path>
-      <path class="arc-fill" d="${arcPath}"></path>
-      <g class="arc-points"></g>
-      <circle class="arc-thumb-ring" cx="0" cy="0" r="9"></circle>
-      <circle class="arc-thumb" cx="0" cy="0" r="4.1"></circle>
+    <svg viewBox="0 0 ${SLIDER_W} ${SLIDER_H}" aria-hidden="true">
+      <line class="track-bg" x1="${TRACK_START_X}" y1="${TRACK_Y}" x2="${TRACK_END_X}" y2="${TRACK_Y}"></line>
+      <line class="track-fill" x1="${TRACK_START_X}" y1="${TRACK_Y}" x2="${TRACK_START_X}" y2="${TRACK_Y}"></line>
+      <g class="track-points"></g>
+      <circle class="thumb-ring" cx="${TRACK_START_X}" cy="${TRACK_Y}" r="10"></circle>
+      <circle class="thumb" cx="${TRACK_START_X}" cy="${TRACK_Y}" r="4.4"></circle>
     </svg>
   `;
 
-  const fillPath=arc.querySelector('.arc-fill');
-  const pointsGroup=arc.querySelector('.arc-points');
-  const thumb=arc.querySelector('.arc-thumb');
-  const thumbRing=arc.querySelector('.arc-thumb-ring');
+  const fillLine=arc.querySelector('.track-fill');
+  const pointsGroup=arc.querySelector('.track-points');
+  const thumb=arc.querySelector('.thumb');
+  const thumbRing=arc.querySelector('.thumb-ring');
   const dotEls=[];
   const itemEls=[];
-  const pathLength=fillPath.getTotalLength();
-  const samples=[];
-  const sampleCount=720;
 
-  for(let i=0;i<=sampleCount;i++){
-    const t=i/sampleCount;
-    samples.push({...pointOnArc(t), t});
-  }
+  const orderedVals = [0,1,2,3,4];
 
-  fillPath.style.strokeDasharray=`${pathLength} ${pathLength}`;
-  fillPath.style.strokeDashoffset=pathLength;
-
-  const orderedTs = [1,0.75,0.5,0.25,0];
-  orderedTs.forEach((t, idx)=>{
-    const pt=pointOnArc(t);
+  orderedVals.forEach((val, idx)=>{
+    const pt=pointOnTrack(val/4);
 
     const dot=document.createElementNS('http://www.w3.org/2000/svg','circle');
-    dot.setAttribute('class','arc-dot');
+    dot.setAttribute('class','tick-dot');
     dot.setAttribute('cx',pt.x);
     dot.setAttribute('cy',pt.y);
-    dot.setAttribute('r',2.4);
+    dot.setAttribute('r',2.8);
     pointsGroup.appendChild(dot);
     dotEls.push(dot);
 
     const item=document.createElement('div');
     item.className='usr-item';
-    item.style.left=(pt.x+LABEL_OFFSET_X)+'px';
-    item.style.top=pt.y+'px';
+    item.style.left=pt.x+'px';
+    item.style.top=(TRACK_Y - 18)+'px';
     item.innerHTML=`
       <span class="usr-icon">${buildAbstractIcon(ICONS[idx % ICONS.length])}</span>
       <span class="usr-index">${String(idx+1).padStart(2,'0')}</span>
@@ -390,50 +423,42 @@ function buildUserSlider(){
     itemEls.push(item);
   });
 
-  function pointOnArc(t){
-    const a=START_A+(END_A-START_A)*t;
-    return { x: CX + Math.cos(a)*R, y: CY + Math.sin(a)*R, angle:a };
+  function pointOnTrack(t){
+    return { x: TRACK_START_X + TRACK_W * t, y: TRACK_Y };
   }
 
-  function clientToValue(clientX,clientY){
+  function clientToValue(clientX){
     const rect=arc.getBoundingClientRect();
     const x=clientX-rect.left;
-    const y=clientY-rect.top;
-    let best=samples[0];
-    let bestD=Infinity;
-    for(let i=0;i<samples.length;i++){
-      const s=samples[i];
-      const dx=x-s.x;
-      const dy=y-s.y;
-      const d=dx*dx+dy*dy*0.58;
-      if(d<bestD){ bestD=d; best=s; }
-    }
-    return best.t*4;
+    const t=Math.max(0,Math.min(1,(x-TRACK_START_X)/TRACK_W));
+    return t*4;
   }
 
   let _dragging=false;
   let _curVal=0;
+  let _hintPlaying=true;
+  let _hintRAF=null;
 
   function setVal(v, doInit){
     _curVal=Math.max(0,Math.min(4,v));
     SCENE_POS=_curVal;
     const t=_curVal/4;
-    const pt=pointOnArc(t);
+    const pt=pointOnTrack(t);
 
     thumb.setAttribute('cx',pt.x);
     thumb.setAttribute('cy',pt.y);
     thumbRing.setAttribute('cx',pt.x);
     thumbRing.setAttribute('cy',pt.y);
-    fillPath.style.strokeDashoffset=pathLength*(1-t);
+    fillLine.setAttribute('x2', pt.x);
+    fillLine.setAttribute('y2', TRACK_Y);
 
     dotEls.forEach((d,i)=>{
-      const dist=Math.abs(_curVal-(4-i));
-      const active=dist<0.16;
+      const active=Math.abs(_curVal-i)<0.16;
       d.classList.toggle('active',active);
-      d.setAttribute('r',active ? 4.5 : 2.4);
+      d.setAttribute('r',active ? 4.8 : 2.8);
     });
     itemEls.forEach((el,i)=>{
-      const active=Math.abs(_curVal-(4-i))<0.16;
+      const active=Math.abs(_curVal-i)<0.16;
       el.classList.toggle('active',active);
       el.style.transform=active ? 'translate(-50%,-50%) scale(1.03)' : 'translate(-50%,-50%) scale(1)';
     });
@@ -443,16 +468,61 @@ function buildUserSlider(){
     if(window._updateSliderTheme) window._updateSliderTheme(_dragging);
   }
 
+  function stopHint(){
+    _hintPlaying=false;
+    if(_hintRAF) cancelAnimationFrame(_hintRAF);
+    _hintRAF=null;
+  }
+
+  function easeInOut(t){
+    return t<0.5 ? 2*t*t : 1 - Math.pow(-2*t + 2, 2)/2;
+  }
+
+  function animateBetween(from, to, dur, done){
+    const start=performance.now();
+    function frame(now){
+      if(!_hintPlaying) return;
+      const p=Math.min(1,(now-start)/dur);
+      const e=easeInOut(p);
+      setVal(from + (to-from)*e, false);
+      if(p<1){
+        _hintRAF=requestAnimationFrame(frame);
+      } else {
+        done && done();
+      }
+    }
+    _hintRAF=requestAnimationFrame(frame);
+  }
+
+  function playHint(){
+    setVal(0,false);
+    setTimeout(()=>{
+      if(!_hintPlaying) return;
+      animateBetween(0,1,900,()=>{
+        if(!_hintPlaying) return;
+        setTimeout(()=>{
+          if(!_hintPlaying) return;
+          animateBetween(1,0,800,()=>{
+            _hintPlaying=false;
+            _hintRAF=null;
+            setVal(0,false);
+          });
+        },180);
+      });
+    },450);
+  }
+
   arc.addEventListener('pointerdown',e=>{
+    stopHint();
     _dragging=true;
     arc.setPointerCapture(e.pointerId);
     const hitIndex=findNearestPreset(e.clientX,e.clientY);
-    setVal(hitIndex!==null ? hitIndex : clientToValue(e.clientX,e.clientY));
+    setVal(hitIndex!==null ? hitIndex : clientToValue(e.clientX));
     e.preventDefault();
   });
   arc.addEventListener('pointermove',e=>{
     if(!_dragging) return;
-    setVal(clientToValue(e.clientX,e.clientY));
+    setVal(clientToValue(e.clientX));
   });
   function endDrag(e){
     _dragging=false;
@@ -467,13 +537,12 @@ function buildUserSlider(){
     const x=clientX-rect.left;
     const y=clientY-rect.top;
     for(let i=0;i<5;i++){
-      const sliderVal = 4 - i;
-      const pt=pointOnArc(sliderVal/4);
-      const labelX=pt.x+LABEL_OFFSET_X;
-      const ddLabel=(x-labelX)*(x-labelX)+(y-pt.y)*(y-pt.y);
-      if(ddLabel<34*34) return sliderVal;
+      const pt=pointOnTrack(i/4);
+      const labelY=TRACK_Y - 18;
+      const ddLabel=(x-pt.x)*(x-pt.x)+(y-labelY)*(y-labelY);
+      if(ddLabel<30*30) return i;
       const ddDot=(x-pt.x)*(x-pt.x)+(y-pt.y)*(y-pt.y);
-      if(ddDot<30*30) return sliderVal;
+      if(ddDot<24*24) return i;
     }
     return null;
   }
@@ -486,50 +555,43 @@ function buildUserSlider(){
     _lastTheme=theme;
     let r=document.documentElement;
     if(theme==='light'){
-      r.style.setProperty('--s-disc-main','rgba(0,0,0,0.034)');
-      r.style.setProperty('--s-disc-soft','rgba(0,0,0,0.05)');
-      r.style.setProperty('--s-disc-small','rgba(0,0,0,0.028)');
-      r.style.setProperty('--s-line',       'rgba(0,0,0,0.12)');
-      r.style.setProperty('--s-guide',      'rgba(0,0,0,0.14)');
-      r.style.setProperty('--s-guide-2',    'rgba(0,0,0,0.09)');
-      r.style.setProperty('--s-fill',       'rgba(0,0,0,0.48)');
-      r.style.setProperty('--s-dot',        'rgba(0,0,0,0.22)');
-      r.style.setProperty('--s-dot-active', 'rgba(0,0,0,0.88)');
-      r.style.setProperty('--s-thumb',      '#111');
-      r.style.setProperty('--s-thumb-ring', 'rgba(0,0,0,0.16)');
-      r.style.setProperty('--s-label',      'rgba(0,0,0,0.42)');
-      r.style.setProperty('--s-label-active','rgba(0,0,0,0.92)');
+      r.style.setProperty('--s-panel-bg',      'rgba(255,255,255,0.58)');
+      r.style.setProperty('--s-panel-stroke',  'rgba(0,0,0,0.08)');
+      r.style.setProperty('--s-dash',          'rgba(0,0,0,0.14)');
+      r.style.setProperty('--s-bubble-1',      'rgba(0,0,0,0.035)');
+      r.style.setProperty('--s-bubble-2',      'rgba(0,0,0,0.025)');
+      r.style.setProperty('--s-bubble-3',      'rgba(0,0,0,0.03)');
+      r.style.setProperty('--s-line',          'rgba(0,0,0,0.14)');
+      r.style.setProperty('--s-fill',          'rgba(0,0,0,0.48)');
+      r.style.setProperty('--s-dot',           'rgba(0,0,0,0.28)');
+      r.style.setProperty('--s-dot-active',    'rgba(0,0,0,0.9)');
+      r.style.setProperty('--s-thumb',         '#111');
+      r.style.setProperty('--s-thumb-ring',    'rgba(0,0,0,0.18)');
+      r.style.setProperty('--s-label',         'rgba(0,0,0,0.55)');
+      r.style.setProperty('--s-label-active',  'rgba(0,0,0,0.96)');
     } else {
-      r.style.setProperty('--s-disc-main','rgba(255,255,255,0.06)');
-      r.style.setProperty('--s-disc-soft','rgba(255,255,255,0.075)');
-      r.style.setProperty('--s-disc-small','rgba(255,255,255,0.035)');
-      r.style.setProperty('--s-line',       'rgba(255,255,255,0.30)');
-      r.style.setProperty('--s-guide',      'rgba(255,255,255,0.16)');
-      r.style.setProperty('--s-guide-2',    'rgba(255,255,255,0.10)');
-      r.style.setProperty('--s-fill',       'rgba(255,255,255,0.92)');
-      r.style.setProperty('--s-dot',        'rgba(255,255,255,0.36)');
-      r.style.setProperty('--s-dot-active', 'rgba(255,255,255,1)');
-      r.style.setProperty('--s-thumb',      '#fff');
-      r.style.setProperty('--s-thumb-ring', 'rgba(255,255,255,0.30)');
-      r.style.setProperty('--s-label',      'rgba(255,255,255,0.74)');
-      r.style.setProperty('--s-label-active','rgba(255,255,255,1)');
+      r.style.setProperty('--s-panel-bg',      'rgba(28,28,42,0.34)');
+      r.style.setProperty('--s-panel-stroke',  'rgba(255,255,255,0.10)');
+      r.style.setProperty('--s-dash',          'rgba(255,255,255,0.16)');
+      r.style.setProperty('--s-bubble-1',      'rgba(255,255,255,0.05)');
+      r.style.setProperty('--s-bubble-2',      'rgba(255,255,255,0.04)');
+      r.style.setProperty('--s-bubble-3',      'rgba(255,255,255,0.045)');
+      r.style.setProperty('--s-line',          'rgba(255,255,255,0.18)');
+      r.style.setProperty('--s-fill',          'rgba(255,255,255,0.92)');
+      r.style.setProperty('--s-dot',           'rgba(255,255,255,0.34)');
+      r.style.setProperty('--s-dot-active',    'rgba(255,255,255,1)');
+      r.style.setProperty('--s-thumb',         '#fff');
+      r.style.setProperty('--s-thumb-ring',    'rgba(255,255,255,0.30)');
+      r.style.setProperty('--s-label',         'rgba(255,255,255,0.76)');
+      r.style.setProperty('--s-label-active',  'rgba(255,255,255,1)');
     }
     try{window.parent.postMessage({fidenzaTheme:theme},'*');}catch(e){}
   };
 
   setInterval(()=>{ if(!_dragging&&window._updateSliderTheme) window._updateSliderTheme(); },500);
   setVal(0,false);
+  playHint();
 
-  function polarToCartesian(cx, cy, r, angle){
-    return { x: cx + Math.cos(angle) * r, y: cy + Math.sin(angle) * r };
-  }
-  function describeArc(cx, cy, r, startAngle, endAngle, sweepFlag){
-    const start = polarToCartesian(cx, cy, r, startAngle);
-    const end = polarToCartesian(cx, cy, r, endAngle);
-    const delta = Math.abs(endAngle - startAngle);
-    const largeArcFlag = delta <= Math.PI ? 0 : 1;
-    return `M ${start.x} ${start.y} A ${r} ${r} 0 ${largeArcFlag} ${sweepFlag} ${end.x} ${end.y}`;
-  }
   function buildAbstractIcon(type){
     switch(type){
       case 'slash':
