@@ -214,18 +214,19 @@ function hexToRgb(h){return{r:parseInt(h.slice(1,3),16),g:parseInt(h.slice(3,5),
 
 // ── SLIDER DO USUÁRIO ──────────────────────────────────────────────────────────
 function buildUserSlider(){
-  const ARC_W = 230;
-  const ARC_H = 560;
-  const WRAP_RIGHT = 10;
-  const R = 330;
-  const CX = ARC_W + 165;
+  const ARC_W = 232;
+  const ARC_H = 620;
+  const WRAP_RIGHT = 18;
+  const R = 780;
+  const CX = ARC_W + 620;
   const CY = ARC_H / 2;
-  const START_A = Math.PI * 0.79;
-  const END_A = Math.PI * 1.21;
-  const LABEL_OFFSET_X = 38;
+  const START_A = Math.PI + 0.43;
+  const END_A = Math.PI - 0.43;
   const ICONS = ['slash','double','split','orbit','tilt'];
+  const LABEL_OFFSET_X = 44;
 
-  const arcPath = describeArc(CX, CY, R, START_A, END_A);
+  const arcPath = describeArc(CX, CY, R, START_A, END_A, 0);
+  const fillShape = describeSegmentFill(CX, CY, R, START_A, END_A, ARC_W + 18);
 
   let style=document.createElement('style');
   style.textContent=`
@@ -240,56 +241,59 @@ function buildUserSlider(){
       overflow:visible;cursor:pointer;
     }
     #usr-arc svg{width:100%;height:100%;display:block;overflow:visible;}
+    #usr-arc .arc-segment-fill{
+      fill:var(--s-segment-fill,rgba(255,255,255,0.07));
+      stroke:none;transition:fill .45s ease,opacity .3s ease;
+    }
     #usr-arc .arc-bg{
-      fill:none;stroke:var(--s-line,rgba(255,255,255,0.12));stroke-width:1.25;
+      fill:none;stroke:var(--s-line,rgba(255,255,255,0.16));stroke-width:1.4;
       transition:stroke .45s ease;
     }
     #usr-arc .arc-fill{
-      fill:none;stroke:var(--s-fill,rgba(255,255,255,0.45));stroke-width:1.75;
+      fill:none;stroke:var(--s-fill,rgba(255,255,255,0.80));stroke-width:2.2;
       stroke-linecap:round;transition:stroke .45s ease,opacity .3s ease;
     }
     #usr-arc .arc-dot{
-      fill:var(--s-dot,rgba(255,255,255,0.22));
-      transition:fill .3s ease,transform .3s ease,r .3s ease;
-      transform-box:fill-box;transform-origin:center;
+      fill:var(--s-dot,rgba(255,255,255,0.34));
+      transition:fill .3s ease,r .25s ease;
     }
-    #usr-arc .arc-dot.active{ fill:var(--s-dot-active,rgba(255,255,255,0.92)); }
+    #usr-arc .arc-dot.active{ fill:var(--s-dot-active,rgba(255,255,255,1)); }
     #usr-arc .arc-thumb{
       fill:var(--s-thumb,#fff);
-      filter:drop-shadow(0 2px 8px rgba(0,0,0,0.28));
+      filter:drop-shadow(0 2px 10px rgba(0,0,0,0.28));
       transition:fill .45s ease;
     }
     #usr-arc .arc-thumb-ring{
-      fill:none;stroke:var(--s-thumb-ring,rgba(255,255,255,0.25));stroke-width:1.5;
+      fill:none;stroke:var(--s-thumb-ring,rgba(255,255,255,0.35));stroke-width:1.7;
       transition:stroke .45s ease;
     }
     .usr-item{
       position:absolute;display:flex;align-items:center;gap:10px;
       transform:translate(-50%,-50%);pointer-events:none;
-      color:var(--s-label,rgba(255,255,255,0.35));
+      color:var(--s-label,rgba(255,255,255,0.55));
       transition:color .3s ease,opacity .3s ease,transform .3s ease;
-      opacity:.72;
+      opacity:.86;
     }
     .usr-item.active{
-      color:var(--s-label-active,rgba(255,255,255,0.96));
+      color:var(--s-label-active,rgba(255,255,255,1));
       opacity:1;
     }
     .usr-item.active .usr-icon{ transform:scale(1.08); }
-    .usr-item.active .usr-index{ letter-spacing:0.02em; }
-    .usr-icon{ width:22px;height:22px;display:block;flex:0 0 auto; transition:transform .25s ease; }
+    .usr-item.active .usr-index{ letter-spacing:0.01em; }
+    .usr-icon{ width:24px;height:24px;display:block;flex:0 0 auto; transition:transform .25s ease; }
     .usr-icon svg{ width:100%;height:100%;overflow:visible; }
     .usr-icon circle,.usr-icon path,.usr-icon line,.usr-icon ellipse{
       stroke:currentColor; fill:none; stroke-width:1.9; stroke-linecap:round; stroke-linejoin:round;
     }
     .usr-index{
-      font:600 18px/1.05 Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-      font-variant-numeric:tabular-nums; letter-spacing:-0.02em;
+      font:700 24px/1 Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      font-variant-numeric:tabular-nums; letter-spacing:-0.03em;
     }
     @media (max-width: 900px){
-      #usr-wrap{ right:4px; transform:translateY(-50%) scale(.88); transform-origin:right center; }
+      #usr-wrap{ right:6px; transform:translateY(-50%) scale(.82); transform-origin:right center; }
     }
     @media (max-width: 640px){
-      #usr-wrap{ right:0; transform:translateY(-50%) scale(.70); }
+      #usr-wrap{ transform:translateY(-50%) scale(.66); }
     }
   `;
   document.head.appendChild(style);
@@ -304,11 +308,12 @@ function buildUserSlider(){
 
   arc.innerHTML=`
     <svg viewBox="0 0 ${ARC_W} ${ARC_H}" aria-hidden="true">
+      <path class="arc-segment-fill" d="${fillShape}"></path>
       <path class="arc-bg" d="${arcPath}"></path>
       <path class="arc-fill" d="${arcPath}"></path>
       <g class="arc-points"></g>
-      <circle class="arc-thumb-ring" cx="0" cy="0" r="9.5"></circle>
-      <circle class="arc-thumb" cx="0" cy="0" r="4.8"></circle>
+      <circle class="arc-thumb-ring" cx="0" cy="0" r="11"></circle>
+      <circle class="arc-thumb" cx="0" cy="0" r="5.2"></circle>
     </svg>
   `;
 
@@ -320,19 +325,26 @@ function buildUserSlider(){
   const dotEls=[];
   const itemEls=[];
   const pathLength=fillPath.getTotalLength();
+  const samples=[];
+  const sampleCount=720;
+
+  for(let i=0;i<=sampleCount;i++){
+    const t=i/sampleCount;
+    samples.push({...pointOnArc(t), t});
+  }
 
   fillPath.style.strokeDasharray=`${pathLength} ${pathLength}`;
   fillPath.style.strokeDashoffset=pathLength;
 
-  for(let i=0;i<5;i++){
-    const t=i/4;
+  const orderedTs = [0,0.25,0.5,0.75,1];
+  orderedTs.forEach((t, idx)=>{
     const pt=pointOnArc(t);
 
     const dot=document.createElementNS('http://www.w3.org/2000/svg','circle');
     dot.setAttribute('class','arc-dot');
     dot.setAttribute('cx',pt.x);
     dot.setAttribute('cy',pt.y);
-    dot.setAttribute('r',i===0||i===4?2.5:3.2);
+    dot.setAttribute('r',3.5);
     pointsGroup.appendChild(dot);
     dotEls.push(dot);
 
@@ -341,12 +353,12 @@ function buildUserSlider(){
     item.style.left=(pt.x+LABEL_OFFSET_X)+'px';
     item.style.top=pt.y+'px';
     item.innerHTML=`
-      <span class="usr-icon">${buildAbstractIcon(ICONS[i % ICONS.length])}</span>
-      <span class="usr-index">${String(i+1).padStart(2,'0')}</span>
+      <span class="usr-icon">${buildAbstractIcon(ICONS[idx % ICONS.length])}</span>
+      <span class="usr-index">${String(idx+1).padStart(2,'0')}</span>
     `;
     arc.appendChild(item);
     itemEls.push(item);
-  }
+  });
 
   function pointOnArc(t){
     const a=START_A+(END_A-START_A)*t;
@@ -357,12 +369,16 @@ function buildUserSlider(){
     const rect=arc.getBoundingClientRect();
     const x=clientX-rect.left;
     const y=clientY-rect.top;
-    const dx=x-CX;
-    const dy=y-CY;
-    let ang=Math.atan2(dy,dx);
-    if(ang<START_A) ang=START_A;
-    if(ang>END_A) ang=END_A;
-    return ((ang-START_A)/(END_A-START_A))*4;
+    let best=samples[0];
+    let bestD=Infinity;
+    for(let i=0;i<samples.length;i++){
+      const s=samples[i];
+      const dx=x-s.x;
+      const dy=y-s.y;
+      const d=dx*dx+dy*dy;
+      if(d<bestD){ bestD=d; best=s; }
+    }
+    return best.t*4;
   }
 
   let _dragging=false;
@@ -381,18 +397,20 @@ function buildUserSlider(){
     fillPath.style.strokeDashoffset=pathLength*(1-t);
 
     dotEls.forEach((d,i)=>{
-      d.classList.toggle('active',Math.abs(_curVal-i)<0.08);
-      d.setAttribute('r',Math.abs(_curVal-i)<0.08 ? 4.5 : (i===0||i===4?2.5:3.2));
+      const dist=Math.abs(_curVal-i);
+      const active=dist<0.16;
+      d.classList.toggle('active',active);
+      d.setAttribute('r',active ? 5.6 : 3.5);
     });
     itemEls.forEach((el,i)=>{
-      const active=Math.abs(_curVal-i)<0.08;
+      const active=Math.abs(_curVal-i)<0.16;
       el.classList.toggle('active',active);
-      el.style.transform=active ? 'translate(-50%,-50%) scale(1.02)' : 'translate(-50%,-50%) scale(1)';
+      el.style.transform=active ? 'translate(-50%,-50%) scale(1.04)' : 'translate(-50%,-50%) scale(1)';
     });
 
     applyScenePos(_curVal,doInit||false);
     if(window._refreshAllSliders) window._refreshAllSliders();
-    if(_dragging && window._updateSliderTheme) window._updateSliderTheme(true);
+    if(window._updateSliderTheme) window._updateSliderTheme(_dragging);
   }
 
   arc.addEventListener('pointerdown',e=>{
@@ -406,25 +424,27 @@ function buildUserSlider(){
     if(!_dragging) return;
     setVal(clientToValue(e.clientX,e.clientY));
   });
-  arc.addEventListener('pointerup',()=>_dragging=false);
-  arc.addEventListener('pointercancel',()=>_dragging=false);
+  function endDrag(e){
+    _dragging=false;
+    if(e && arc.hasPointerCapture && arc.hasPointerCapture(e.pointerId)) arc.releasePointerCapture(e.pointerId);
+  }
+  arc.addEventListener('pointerup',endDrag);
+  arc.addEventListener('pointercancel',endDrag);
+  arc.addEventListener('lostpointercapture',()=>_dragging=false);
 
   function findNearestPreset(clientX,clientY){
     const rect=arc.getBoundingClientRect();
     const x=clientX-rect.left;
     const y=clientY-rect.top;
-    let best=null;
     for(let i=0;i<5;i++){
       const pt=pointOnArc(i/4);
       const labelX=pt.x+LABEL_OFFSET_X;
-      const dx=x-labelX;
-      const dy=y-pt.y;
-      const dd=Math.sqrt(dx*dx+dy*dy);
-      if(dd<24){ best=i; break; }
-      const dd2=Math.sqrt((x-pt.x)*(x-pt.x)+(y-pt.y)*(y-pt.y));
-      if(dd2<18){ best=i; break; }
+      const ddLabel=(x-labelX)*(x-labelX)+(y-pt.y)*(y-pt.y);
+      if(ddLabel<34*34) return i;
+      const ddDot=(x-pt.x)*(x-pt.x)+(y-pt.y)*(y-pt.y);
+      if(ddDot<22*22) return i;
     }
-    return best;
+    return null;
   }
 
   let _lastTheme='';
@@ -435,23 +455,25 @@ function buildUserSlider(){
     _lastTheme=theme;
     let r=document.documentElement;
     if(theme==='light'){
-      r.style.setProperty('--s-line',       'rgba(0,0,0,0.10)');
-      r.style.setProperty('--s-fill',       'rgba(0,0,0,0.38)');
-      r.style.setProperty('--s-dot',        'rgba(0,0,0,0.20)');
-      r.style.setProperty('--s-dot-active', 'rgba(0,0,0,0.88)');
+      r.style.setProperty('--s-segment-fill','rgba(0,0,0,0.045)');
+      r.style.setProperty('--s-line',       'rgba(0,0,0,0.14)');
+      r.style.setProperty('--s-fill',       'rgba(0,0,0,0.50)');
+      r.style.setProperty('--s-dot',        'rgba(0,0,0,0.26)');
+      r.style.setProperty('--s-dot-active', 'rgba(0,0,0,0.92)');
       r.style.setProperty('--s-thumb',      '#111');
-      r.style.setProperty('--s-thumb-ring', 'rgba(0,0,0,0.14)');
-      r.style.setProperty('--s-label',      'rgba(0,0,0,0.24)');
-      r.style.setProperty('--s-label-active','rgba(0,0,0,0.9)');
+      r.style.setProperty('--s-thumb-ring', 'rgba(0,0,0,0.18)');
+      r.style.setProperty('--s-label',      'rgba(0,0,0,0.42)');
+      r.style.setProperty('--s-label-active','rgba(0,0,0,0.94)');
     } else {
-      r.style.setProperty('--s-line',       'rgba(255,255,255,0.14)');
-      r.style.setProperty('--s-fill',       'rgba(255,255,255,0.52)');
-      r.style.setProperty('--s-dot',        'rgba(255,255,255,0.22)');
-      r.style.setProperty('--s-dot-active', 'rgba(255,255,255,0.96)');
+      r.style.setProperty('--s-segment-fill','rgba(255,255,255,0.12)');
+      r.style.setProperty('--s-line',       'rgba(255,255,255,0.38)');
+      r.style.setProperty('--s-fill',       'rgba(255,255,255,0.96)');
+      r.style.setProperty('--s-dot',        'rgba(255,255,255,0.55)');
+      r.style.setProperty('--s-dot-active', 'rgba(255,255,255,1)');
       r.style.setProperty('--s-thumb',      '#fff');
-      r.style.setProperty('--s-thumb-ring', 'rgba(255,255,255,0.22)');
-      r.style.setProperty('--s-label',      'rgba(255,255,255,0.30)');
-      r.style.setProperty('--s-label-active','rgba(255,255,255,0.96)');
+      r.style.setProperty('--s-thumb-ring', 'rgba(255,255,255,0.52)');
+      r.style.setProperty('--s-label',      'rgba(255,255,255,0.76)');
+      r.style.setProperty('--s-label-active','rgba(255,255,255,1)');
     }
     try{window.parent.postMessage({fidenzaTheme:theme},'*');}catch(e){}
   };
@@ -462,11 +484,19 @@ function buildUserSlider(){
   function polarToCartesian(cx, cy, r, angle){
     return { x: cx + Math.cos(angle) * r, y: cy + Math.sin(angle) * r };
   }
-  function describeArc(cx, cy, r, startAngle, endAngle){
+  function describeArc(cx, cy, r, startAngle, endAngle, sweepFlag){
     const start = polarToCartesian(cx, cy, r, startAngle);
     const end = polarToCartesian(cx, cy, r, endAngle);
-    const largeArcFlag = (endAngle - startAngle) <= Math.PI ? 0 : 1;
-    return `M ${start.x} ${start.y} A ${r} ${r} 0 ${largeArcFlag} 1 ${end.x} ${end.y}`;
+    const delta = Math.abs(endAngle - startAngle);
+    const largeArcFlag = delta <= Math.PI ? 0 : 1;
+    return `M ${start.x} ${start.y} A ${r} ${r} 0 ${largeArcFlag} ${sweepFlag} ${end.x} ${end.y}`;
+  }
+  function describeSegmentFill(cx, cy, r, startAngle, endAngle, edgeX){
+    const start = polarToCartesian(cx, cy, r, startAngle);
+    const end = polarToCartesian(cx, cy, r, endAngle);
+    const delta = Math.abs(endAngle - startAngle);
+    const largeArcFlag = delta <= Math.PI ? 0 : 1;
+    return `M ${start.x} ${start.y} A ${r} ${r} 0 ${largeArcFlag} 0 ${end.x} ${end.y} L ${edgeX} ${end.y} L ${edgeX} ${start.y} Z`;
   }
   function buildAbstractIcon(type){
     switch(type){
