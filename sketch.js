@@ -212,121 +212,187 @@ function applyColorMods(c){ let r=c[0]/255,g=c[1]/255,b=c[2]/255,mx=Math.max(r,g
 function rgbToHex(r,g,b){return'#'+[r,g,b].map(v=>v.toString(16).padStart(2,'0')).join('');}
 function hexToRgb(h){return{r:parseInt(h.slice(1,3),16),g:parseInt(h.slice(3,5),16),b:parseInt(h.slice(5,7),16)};}
 
-// ── SLIDER DO USUÁRIO ──────────────────────────────────────────────────────────
+// ── SLIDER SEMICIRCULAR ────────────────────────────────────────────────────────
 function buildUserSlider(){
-  // ── Ajuste de posição aqui ──
-  const SLIDER_RIGHT  = 24;   // distância da borda direita (px)
-  const SLIDER_HEIGHT = 220;  // altura visual da trilha (px)
-  // ────────────────────────────
+  // ── Ajuste de posição/tamanho aqui ──
+  const ARC_R      = 80;   // raio do arco (px)
+  const SLIDER_RIGHT = 0;  // distância da borda direita
+  // ────────────────────────────────────
 
+  // O semicírculo vai de 270° (topo) até 90° (base), passando pela esquerda (180°)
+  // Ângulo 0 = preset 1 (topo), ângulo 4 = preset 5 (base)
+  // Arco: de -90° a +90° no lado esquerdo → de 270° a 90° no sentido anti-horário
+  // O arco vai pelo lado esquerdo: topo(-90°) → esquerda(±180°) → base(+90°)
+  function valToAngle(v){ return -90-(v/4)*180; } // graus — vai pela esquerda
+  function angleToRad(deg){ return deg * Math.PI/180; }
+
+  // Ponto no arco para um valor 0..4
+  function valToXY(v){
+    let a = angleToRad(valToAngle(v));
+    return {
+      x: ARC_R + ARC_R*Math.cos(a),  // cos(-90°)=0 → x=ARC_R (centro), cos(0°)=-ARC_R → esquerda
+      y: ARC_R + ARC_R*Math.sin(a)
+    };
+  }
+
+  // Cria o SVG
+  const W = ARC_R*2, H = ARC_R*2;
   let style=document.createElement('style');
   style.textContent=`
     #usr-wrap{
-      position:fixed;right:${SLIDER_RIGHT}px;top:50%;transform:translateY(-50%);
-      z-index:300;display:flex;flex-direction:column;align-items:center;
-      pointer-events:auto;touch-action:none;user-select:none;
+      position:fixed;right:${SLIDER_RIGHT}px;top:50%;
+      transform:translateY(-50%);
+      z-index:300;pointer-events:auto;touch-action:none;user-select:none;
     }
-    #usr-track{
-      position:relative;width:28px;height:${SLIDER_HEIGHT}px;
-      display:flex;flex-direction:column;align-items:center;justify-content:space-between;
-      cursor:pointer;
-    }
-    #usr-line-bg{
-      position:absolute;left:50%;transform:translateX(-50%);
-      top:0;bottom:0;width:1px;
-      background:var(--s-line,rgba(255,255,255,0.15));border-radius:1px;
-      transition:background .5s;
-    }
-    #usr-line-fill{
-      position:absolute;left:50%;transform:translateX(-50%);
-      top:0;width:1px;height:0%;
-      background:var(--s-fill,rgba(255,255,255,0.55));border-radius:1px;
-      transition:background .5s;
-    }
-    .usr-dot{
-      width:5px;height:5px;border-radius:50%;
-      background:var(--s-dot,rgba(255,255,255,0.35));
-      position:relative;z-index:2;flex-shrink:0;
-      transition:background .3s,transform .25s,width .25s,height .25s;
-      pointer-events:none;
-    }
-    .usr-dot.active{
-      width:9px;height:9px;
-      background:var(--s-dot-active,rgba(255,255,255,0.95));
-    }
-    #usr-thumb{
-      position:absolute;left:50%;transform:translate(-50%,-50%);
-      width:11px;height:11px;border-radius:50%;
-      background:var(--s-thumb,#fff);
-      box-shadow:0 0 0 2px var(--s-thumb-ring,rgba(255,255,255,0.3)),0 2px 8px rgba(0,0,0,0.35);
-      pointer-events:none;z-index:4;
-      transition:background .5s,box-shadow .5s;
-    }
+    #usr-svg{ overflow:visible;display:block; }
+    #usr-arc-bg{ fill:none;stroke:var(--s-line,rgba(255,255,255,0.15));stroke-width:1; }
+    #usr-arc-fill{ fill:none;stroke:var(--s-fill,rgba(255,255,255,0.5));stroke-width:1.5;
+      stroke-dasharray:0 1000;transition:stroke-dashoffset .05s; }
+    .usr-dot-el{ cursor:pointer;transition:r .2s; }
+    .usr-dot-el circle.bg{ fill:var(--s-dot,rgba(255,255,255,0.3)); }
+    .usr-dot-el circle.bg.active{ fill:var(--s-dot-active,rgba(255,255,255,0.95)); }
+    #usr-thumb-el{ pointer-events:none; }
+    #usr-thumb-el circle{ fill:var(--s-thumb,#fff);
+      filter:drop-shadow(0 1px 4px rgba(0,0,0,0.4)); }
+    #usr-hit{ fill:transparent;cursor:pointer; }
   `;
   document.head.appendChild(style);
 
-  let wrap =document.createElement('div');wrap.id='usr-wrap';document.body.appendChild(wrap);
-  let track=document.createElement('div');track.id='usr-track';wrap.appendChild(track);
-  let lineBg  =document.createElement('div');lineBg.id='usr-line-bg';track.appendChild(lineBg);
-  let lineFill=document.createElement('div');lineFill.id='usr-line-fill';track.appendChild(lineFill);
-  let thumb=document.createElement('div');thumb.id='usr-thumb';track.appendChild(thumb);
+  let wrap=document.createElement('div');wrap.id='usr-wrap';document.body.appendChild(wrap);
 
-  // 5 dots posicionados de forma absoluta ao longo da trilha
+  // Monta SVG
+  const ns='http://www.w3.org/2000/svg';
+  let svg=document.createElementNS(ns,'svg');
+  svg.id='usr-svg';
+  svg.setAttribute('width', W);
+  svg.setAttribute('height', H);
+  svg.setAttribute('viewBox',`0 0 ${W} ${H}`);
+  wrap.appendChild(svg);
+
+  // Arco de fundo
+  // Caminho: semicírculo do topo (ARC_R, 0) até a base (ARC_R, 2*ARC_R) pela esquerda
+  // SVG arc: large-arc=1, sweep=0 (anti-horário)
+  let arcPath=`M ${ARC_R} ${0} A ${ARC_R} ${ARC_R} 0 1 0 ${ARC_R} ${H}`;
+
+  let arcBg=document.createElementNS(ns,'path');
+  arcBg.id='usr-arc-bg';
+  arcBg.setAttribute('d',arcPath);
+  svg.appendChild(arcBg);
+
+  let arcFill=document.createElementNS(ns,'path');
+  arcFill.id='usr-arc-fill';
+  arcFill.setAttribute('d',arcPath);
+  svg.appendChild(arcFill);
+
+  // Comprimento do arco (semicírculo = π*r)
+  const ARC_LEN = Math.PI * ARC_R;
+  arcFill.style.strokeDasharray=`0 ${ARC_LEN}`;
+
+  // Área de hit invisível
+  let hit=document.createElementNS(ns,'path');
+  hit.id='usr-hit';
+  hit.setAttribute('d',arcPath);
+  hit.setAttribute('stroke-width','28');
+  hit.setAttribute('stroke','transparent');
+  hit.setAttribute('fill','none');
+  svg.appendChild(hit);
+
+  // 5 dots nos presets
   let dotEls=[];
   for(let i=0;i<5;i++){
-    let dot=document.createElement('div');
-    dot.className='usr-dot';
-    dot.style.cssText=`position:absolute;left:50%;transform:translateX(-50%);top:${(i/4)*100}%;margin-top:-2.5px;`;
-    track.appendChild(dot);
-    dotEls.push(dot);
+    let pt=valToXY(i);
+    let g=document.createElementNS(ns,'g');
+    g.classList.add('usr-dot-el');
+    let c=document.createElementNS(ns,'circle');
+    c.classList.add('bg');
+    c.setAttribute('cx',pt.x);c.setAttribute('cy',pt.y);c.setAttribute('r','4');
+    g.appendChild(c);
+    svg.appendChild(g);
+    dotEls.push({g,c});
   }
 
-  // Converte clientY → valor 0..4 usando o rect real da track
-  function yToVal(clientY){
-    let r=track.getBoundingClientRect();
-    let pct=Math.max(0,Math.min(1,(clientY-r.top)/r.height));
-    return pct*4;
-  }
+  // Thumb
+  let thumbG=document.createElementNS(ns,'g');thumbG.id='usr-thumb-el';
+  let thumbC=document.createElementNS(ns,'circle');
+  thumbC.setAttribute('r','7');
+  thumbG.appendChild(thumbC);svg.appendChild(thumbG);
 
+  let _val=0;
   let _dragging=false;
-  let _curVal=0;
 
-  function setVal(v, doInit){
-    _curVal=v;
-    SCENE_POS=v;
-    let pct=v/4;
-    thumb.style.top=(pct*100)+'%';
-    lineFill.style.height=(pct*100)+'%';
-    dotEls.forEach((d,i)=>d.classList.toggle('active',Math.abs(v-i)<0.06));
-    applyScenePos(v,doInit||false);
+  function setVal(v,doInit){
+    _val=Math.max(0,Math.min(4,v));
+    SCENE_POS=_val;
+
+    // thumb position
+    let pt=valToXY(_val);
+    thumbG.setAttribute('transform',`translate(${pt.x},${pt.y})`);
+
+    // arc fill: stroke-dasharray len = pct * ARC_LEN
+    let pct=_val/4;
+    arcFill.style.strokeDasharray=`${pct*ARC_LEN} ${ARC_LEN}`;
+
+    // dots
+    dotEls.forEach((d,i)=>{
+      let active=Math.abs(_val-i)<0.07;
+      d.c.classList.toggle('active',active);
+      d.c.setAttribute('r', active?'6':'4');
+    });
+
+    applyScenePos(_val,doInit||false);
     if(window._refreshAllSliders) window._refreshAllSliders();
     if(_dragging && window._updateSliderTheme) window._updateSliderTheme(true);
   }
 
-  // clique/drag na track
-  track.addEventListener('pointerdown',e=>{
-    _dragging=true;
-    track.setPointerCapture(e.pointerId);
-    // verifica se clicou perto de um dot — crava no preset
-    let r=track.getBoundingClientRect();
-    let pct=(e.clientY-r.top)/r.height;
-    let nearest=Math.round(pct*4);
-    let nearestPct=nearest/4;
-    if(Math.abs(pct-nearestPct)<0.08){
-      setVal(nearest);
+  // Converte posição do mouse → ângulo → valor 0..4
+  function xyToVal(clientX,clientY){
+    let rect=svg.getBoundingClientRect();
+    let cx=rect.left+ARC_R, cy=rect.top+ARC_R;
+    let dx=clientX-cx, dy=clientY-cy;
+    let angleDeg=Math.atan2(dy,dx)*180/Math.PI; // -180..+180
+    // Arco vai de -90 (topo) até +90 (base) passando por ±180 (esquerda)
+    let norm;
+    if(angleDeg<=-90){
+      norm=(-90-angleDeg)/180;       // -90→0, -180→0.5
+    } else if(angleDeg>=90){
+      norm=0.5+(180-angleDeg)/180;   // +180→0.5, +90→1
     } else {
-      setVal(yToVal(e.clientY));
+      norm=angleDeg<0?0:1;           // lado direito → snap ao extremo
     }
+    return Math.max(0,Math.min(4,norm*4));
+  }
+
+  // Snap para preset mais próximo se perto
+  function snapIfClose(v){
+    let nearest=Math.round(v);
+    return Math.abs(v-nearest)<0.25 ? nearest : v;
+  }
+
+  hit.addEventListener('pointerdown',e=>{
+    _dragging=true;
+    hit.setPointerCapture(e.pointerId);
+    let v=snapIfClose(xyToVal(e.clientX,e.clientY));
+    setVal(v);
     e.preventDefault();
   });
-
-  track.addEventListener('pointermove',e=>{
+  hit.addEventListener('pointermove',e=>{
     if(!_dragging) return;
-    setVal(yToVal(e.clientY));
+    setVal(snapIfClose(xyToVal(e.clientX,e.clientY)));
+  });
+  hit.addEventListener('pointerup',  ()=>_dragging=false);
+  hit.addEventListener('pointercancel',()=>_dragging=false);
+
+  // Clique nos dots → crava no preset
+  dotEls.forEach((d,i)=>{
+    d.g.style.pointerEvents='all';
+    d.g.addEventListener('pointerdown',e=>{
+      e.stopPropagation();
+      setVal(i);
+    });
   });
 
-  track.addEventListener('pointerup',  ()=>_dragging=false);
-  track.addEventListener('pointercancel',()=>_dragging=false);
+  // Init
+  setVal(0);
 
   // ── Tema adaptativo ────────────────────────────────────────────────────────
   let _lastTheme='';
@@ -337,19 +403,17 @@ function buildUserSlider(){
     _lastTheme=theme;
     let r=document.documentElement;
     if(theme==='light'){
-      r.style.setProperty('--s-line',       'rgba(0,0,0,0.12)');
-      r.style.setProperty('--s-fill',       'rgba(0,0,0,0.50)');
-      r.style.setProperty('--s-dot',        'rgba(0,0,0,0.25)');
-      r.style.setProperty('--s-dot-active', 'rgba(0,0,0,0.85)');
+      r.style.setProperty('--s-line',       'rgba(0,0,0,0.10)');
+      r.style.setProperty('--s-fill',       'rgba(0,0,0,0.45)');
+      r.style.setProperty('--s-dot',        'rgba(0,0,0,0.20)');
+      r.style.setProperty('--s-dot-active', 'rgba(0,0,0,0.80)');
       r.style.setProperty('--s-thumb',      '#111');
-      r.style.setProperty('--s-thumb-ring', 'rgba(0,0,0,0.15)');
     } else {
-      r.style.setProperty('--s-line',       'rgba(255,255,255,0.15)');
-      r.style.setProperty('--s-fill',       'rgba(255,255,255,0.55)');
-      r.style.setProperty('--s-dot',        'rgba(255,255,255,0.35)');
-      r.style.setProperty('--s-dot-active', 'rgba(255,255,255,0.95)');
+      r.style.setProperty('--s-line',       'rgba(255,255,255,0.13)');
+      r.style.setProperty('--s-fill',       'rgba(255,255,255,0.50)');
+      r.style.setProperty('--s-dot',        'rgba(255,255,255,0.30)');
+      r.style.setProperty('--s-dot-active', 'rgba(255,255,255,0.92)');
       r.style.setProperty('--s-thumb',      '#fff');
-      r.style.setProperty('--s-thumb-ring', 'rgba(255,255,255,0.25)');
     }
     try{window.parent.postMessage({fidenzaTheme:theme},'*');}catch(e){}
   };
