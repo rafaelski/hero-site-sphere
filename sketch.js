@@ -29,16 +29,11 @@ function toSphere(x,y){
 // ── PRESETS HARDCODED ──────────────────────────────────────────────────────────
 // Edite esses valores usando ?edit=true e depois exporte via botão "Exportar JSON"
 const SCENE_DEFAULTS = [
-  // Preset 1 — default
-  {FIELD_SCALE:0.0018,FIELD_ANGLE:3.14159,FIELD_EVOLUTION:0.0003,REPULSION_RADIUS:30,REPULSION_STRENGTH:0.8,NUM_PARTICLES:800,TRAIL_LENGTH:10,MIN_WIDTH:4,MAX_WIDTH:18,SPEED:4.0,WRAP_EDGES:true,ATTRACTOR_RADIUS:180,ATTRACTOR_STRENGTH:2.5,ATTRACTOR_DECAY:0.015,ORBIT_DISTANCE:60,FADE_TAIL:true,BG_FADE:false,BG_FADE_ALPHA:20,SAT_MULT:1.0,LIGHT_MULT:1.0,BG_COLOR:[245,240,228],PALETTE:[[210,80,50,0.28],[60,110,190,0.28],[220,185,50,0.16],[190,190,190,0.16],[40,40,40,0.12]],SPHERE_R_PCT:0.38,SPHERE_R_MIN:120,SPHERE_R_MAX:500,ROT_SPEED:0.0013},
-  // Preset 2
-  {FIELD_SCALE:0.0035,FIELD_ANGLE:6.28,FIELD_EVOLUTION:0.0006,REPULSION_RADIUS:15,REPULSION_STRENGTH:0.3,NUM_PARTICLES:400,TRAIL_LENGTH:25,MIN_WIDTH:2,MAX_WIDTH:8,SPEED:2.0,WRAP_EDGES:true,ATTRACTOR_RADIUS:250,ATTRACTOR_STRENGTH:5.0,ATTRACTOR_DECAY:0.01,ORBIT_DISTANCE:40,FADE_TAIL:true,BG_FADE:true,BG_FADE_ALPHA:12,SAT_MULT:0.7,LIGHT_MULT:1.3,BG_COLOR:[20,20,40],PALETTE:[[20,80,140,0.30],[40,140,180,0.25],[80,200,200,0.20],[20,40,80,0.15],[160,220,230,0.10]],SPHERE_R_PCT:0.32,SPHERE_R_MIN:100,SPHERE_R_MAX:400,ROT_SPEED:0.0025},
-  // Preset 3
-  {FIELD_SCALE:0.001,FIELD_ANGLE:1.5,FIELD_EVOLUTION:0.0001,REPULSION_RADIUS:50,REPULSION_STRENGTH:1.5,NUM_PARTICLES:1200,TRAIL_LENGTH:6,MIN_WIDTH:6,MAX_WIDTH:30,SPEED:7.0,WRAP_EDGES:true,ATTRACTOR_RADIUS:120,ATTRACTOR_STRENGTH:1.5,ATTRACTOR_DECAY:0.02,ORBIT_DISTANCE:80,FADE_TAIL:false,BG_FADE:false,BG_FADE_ALPHA:20,SAT_MULT:1.5,LIGHT_MULT:0.9,BG_COLOR:[245,240,228],PALETTE:[[255,50,50,0.25],[50,200,100,0.25],[50,100,255,0.20],[255,200,0,0.20],[200,0,200,0.10]],SPHERE_R_PCT:0.45,SPHERE_R_MIN:150,SPHERE_R_MAX:600,ROT_SPEED:0.0005},
-  // Preset 4
-  {FIELD_SCALE:0.005,FIELD_ANGLE:9.0,FIELD_EVOLUTION:0.001,REPULSION_RADIUS:8,REPULSION_STRENGTH:0.1,NUM_PARTICLES:600,TRAIL_LENGTH:40,MIN_WIDTH:1,MAX_WIDTH:5,SPEED:3.0,WRAP_EDGES:true,ATTRACTOR_RADIUS:300,ATTRACTOR_STRENGTH:8.0,ATTRACTOR_DECAY:0.008,ORBIT_DISTANCE:30,FADE_TAIL:true,BG_FADE:true,BG_FADE_ALPHA:8,SAT_MULT:0.3,LIGHT_MULT:1.5,BG_COLOR:[10,10,10],PALETTE:[[200,200,200,0.35],[150,150,150,0.30],[100,100,100,0.20],[60,60,60,0.10],[240,240,240,0.05]],SPHERE_R_PCT:0.42,SPHERE_R_MIN:130,SPHERE_R_MAX:550,ROT_SPEED:0.002},
-  // Preset 5
-  {FIELD_SCALE:0.0025,FIELD_ANGLE:4.7,FIELD_EVOLUTION:0.0005,REPULSION_RADIUS:20,REPULSION_STRENGTH:0.5,NUM_PARTICLES:900,TRAIL_LENGTH:15,MIN_WIDTH:3,MAX_WIDTH:14,SPEED:5.0,WRAP_EDGES:true,ATTRACTOR_RADIUS:200,ATTRACTOR_STRENGTH:3.5,ATTRACTOR_DECAY:0.012,ORBIT_DISTANCE:55,FADE_TAIL:true,BG_FADE:false,BG_FADE_ALPHA:20,SAT_MULT:1.2,LIGHT_MULT:1.0,BG_COLOR:[245,240,228],PALETTE:[[180,100,40,0.30],[140,80,30,0.25],[200,160,80,0.20],[100,70,40,0.15],[230,200,140,0.10]],SPHERE_R_PCT:0.35,SPHERE_R_MIN:110,SPHERE_R_MAX:450,ROT_SPEED:0.0018}
+  {"FIELD_SCALE":0.0018,"FIELD_ANGLE":5.17,"FIELD_EVOLUTION":0.0003,"REPULSION_RADIUS":65,"REPULSION_STRENGTH":0.8,"NUM_PARTICLES":1550,"TRAIL_LENGTH":7,"MIN_WIDTH":1.5,"MAX_WIDTH":2,"SPEED":4,"WRAP_EDGES":true,"ATTRACTOR_RADIUS":330,"ATTRACTOR_STRENGTH":11.5,"ATTRACTOR_DECAY":0.04,"ORBIT_DISTANCE":60,"FADE_TAIL":false,"BG_FADE":false,"BG_FADE_ALPHA":20,"SAT_MULT":1,"LIGHT_MULT":1,"BG_COLOR":[15,14,23],"PALETTE":[[20,80,140,0.3],[40,140,180,0.25],[80,200,200,0.2],[20,40,80,0.15],[160,220,230,0.1]],"SPHERE_R_PCT":0.38,"SPHERE_R_MIN":120,"SPHERE_R_MAX":500,"ROT_SPEED":0.0013},
+  {"FIELD_SCALE":0.00032287999999999994,"FIELD_ANGLE":6.612256,"FIELD_EVOLUTION":0.0017081600000000002,"REPULSION_RADIUS":71.16,"REPULSION_STRENGTH":1.2460799999999999,"NUM_PARTICLES":1246,"TRAIL_LENGTH":5,"MIN_WIDTH":1.7679999999999996,"MAX_WIDTH":5.454399999999998,"SPEED":5.7303999999999995,"WRAP_EDGES":true,"ATTRACTOR_RADIUS":421.2,"ATTRACTOR_STRENGTH":13.068,"ATTRACTOR_DECAY":0.011536,"ORBIT_DISTANCE":46.144,"FADE_TAIL":false,"BG_FADE":true,"BG_FADE_ALPHA":41.160000000000004,"SAT_MULT":1,"LIGHT_MULT":1,"BG_COLOR":[15,14,23],"PALETTE":[[66,66,66,0.18261168057210966],[67,74,80,0.20851062996408173],[118,142,142,0.20249640047675802],[168,195,201,0.18202073788097048],[202,230,239,0.22436055110608014]],"SPHERE_R_PCT":0.38,"SPHERE_R_MIN":107.67999999999999,"SPHERE_R_MAX":430.71999999999997,"ROT_SPEED":0.0021928},
+  {"FIELD_SCALE":0.0017521878732800007,"FIELD_ANGLE":5.57167528,"FIELD_EVOLUTION":0.00033626061696000024,"REPULSION_RADIUS":51.8496,"REPULSION_STRENGTH":1.2609425919999997,"NUM_PARTICLES":460,"TRAIL_LENGTH":7,"MIN_WIDTH":9.5,"MAX_WIDTH":28.5,"SPEED":6.220820959999998,"WRAP_EDGES":true,"ATTRACTOR_RADIUS":360.413172,"ATTRACTOR_STRENGTH":13.638562719999998,"ATTRACTOR_DECAY":0.017343903935999997,"ORBIT_DISTANCE":68.986633664,"FADE_TAIL":false,"BG_FADE":false,"BG_FADE_ALPHA":18.471616479999998,"SAT_MULT":0.8763687999999998,"LIGHT_MULT":1.088308,"BG_COLOR":[18,17,25],"PALETTE":[[244,242,241,0.09121712000000004],[28,63,92,0.3616485231114305],[22,144,139,0.31148746799999993],[14,151,178,0.091174983545142],[43,185,232,0.14447190534342758]],"SPHERE_R_PCT":0.38,"SPHERE_R_MIN":144.49916127999998,"SPHERE_R_MAX":583.8313763199999,"ROT_SPEED":0.0008561772768000003},
+  {"FIELD_SCALE":0.004500635032371199,"FIELD_ANGLE":8.4728804512,"FIELD_EVOLUTION":0.0008979472387584,"REPULSION_RADIUS":44.774784000000004,"REPULSION_STRENGTH":2.33263571968,"NUM_PARTICLES":600,"TRAIL_LENGTH":5,"MIN_WIDTH":6.5299136,"MAX_WIDTH":16.09001088,"SPEED":5.7514069184,"WRAP_EDGES":true,"ATTRACTOR_RADIUS":309.28878288,"ATTRACTOR_STRENGTH":8.866953068800001,"ATTRACTOR_DECAY":0.009436665085440001,"ORBIT_DISTANCE":35.99436121856,"FADE_TAIL":false,"BG_FADE":false,"BG_FADE_ALPHA":9.6100556992,"SAT_MULT":0.987797152,"LIGHT_MULT":1.00871632,"BG_COLOR":[222,218,208],"PALETTE":[[213,96,69,0.26136644480000004],[57,105,180,0.2880590054691152],[201,180,58,0.17495236272],[172,187,189,0.15320672116426814],[40,54,59,0.12241546584661667]],"SPHERE_R_PCT":0.38,"SPHERE_R_MIN":132.2293078912,"SPHERE_R_MAX":555.2017184128,"ROT_SPEED":0.0018241323774720003},
+  {"FIELD_SCALE":0.0053,"FIELD_ANGLE":6.75,"FIELD_EVOLUTION":0.0054,"REPULSION_RADIUS":54,"REPULSION_STRENGTH":2.45,"NUM_PARTICLES":2000,"TRAIL_LENGTH":5,"MIN_WIDTH":1,"MAX_WIDTH":1,"SPEED":1.5,"WRAP_EDGES":true,"ATTRACTOR_RADIUS":465,"ATTRACTOR_STRENGTH":14.3,"ATTRACTOR_DECAY":0.012,"ORBIT_DISTANCE":55,"FADE_TAIL":false,"BG_FADE":true,"BG_FADE_ALPHA":20,"SAT_MULT":1,"LIGHT_MULT":1,"BG_COLOR":[245,240,228],"PALETTE":[[255,50,50,0.25],[50,200,100,0.25],[50,100,255,0.19999999999999998],[255,200,0,0.19999999999999998],[200,0,200,0.09999999999999999]],"SPHERE_R_PCT":0.38,"SPHERE_R_MIN":110,"SPHERE_R_MAX":450,"ROT_SPEED":0}
 ];
 
 // Presets editáveis em runtime (inicializados com os defaults hardcoded)
@@ -126,6 +121,7 @@ function setup(){
   });
   if(EDIT_MODE) buildEditUI();
   buildUserSlider();
+  if(window._updateSliderTheme) window._updateSliderTheme();
   setTimeout(function(){
     CANVAS_W=window.innerWidth; CANVAS_H=window.innerHeight;
     SPHERE_R=calcSphereR(); resizeCanvas(CANVAS_W,CANVAS_H); init();
@@ -151,6 +147,8 @@ function draw(){
   else{background(BG_COLOR[0],BG_COLOR[1],BG_COLOR[2]);}
   if(attractor.strength>0){attractor.strength=max(0,attractor.strength-ATTRACTOR_DECAY);if(attractor.strength===0)attractor.active=false;}
   rotY+=ROT_SPEED;
+  // atualiza tema do slider ~1x/s
+  if(frameCount%60===0 && window._updateSliderTheme) window._updateSliderTheme();
   buildSpatialGrid();
   for(let p of particles){p.update();p.draw();}
 }
@@ -216,13 +214,13 @@ function applyColorMods(c){ let r=c[0]/255,g=c[1]/255,b=c[2]/255,mx=Math.max(r,g
 function rgbToHex(r,g,b){return'#'+[r,g,b].map(v=>v.toString(16).padStart(2,'0')).join('');}
 function hexToRgb(h){return{r:parseInt(h.slice(1,3),16),g:parseInt(h.slice(3,5),16),b:parseInt(h.slice(5,7),16)};}
 
-// ── SLIDER DO USUÁRIO (sempre visível) ─────────────────────────────────────────
+// ── SLIDER DO USUÁRIO (sempre visível, adapta à cor do fundo) ─────────────────
 function buildUserSlider(){
   let style=document.createElement('style');
   style.textContent=`
     #user-slider-wrap{
       position:fixed;right:18px;top:50%;transform:translateY(-50%);
-      z-index:300;display:flex;flex-direction:column;align-items:center;gap:0;
+      z-index:300;display:flex;flex-direction:column;align-items:center;
       pointer-events:auto;touch-action:none;
     }
     #user-slider-track{
@@ -232,21 +230,29 @@ function buildUserSlider(){
     }
     #user-slider-line{
       position:absolute;top:0;bottom:0;left:50%;transform:translateX(-50%);
-      width:2px;background:rgba(0,0,0,0.15);border-radius:1px;
+      width:2px;border-radius:1px;
+      background:var(--slider-line,rgba(0,0,0,0.18));
+      transition:background 0.6s;
     }
     .user-dot{
       width:10px;height:10px;border-radius:50%;
-      background:rgba(0,0,0,0.25);border:2px solid rgba(0,0,0,0.2);
+      background:var(--dot-bg,rgba(0,0,0,0.22));
+      border:2px solid var(--dot-border,rgba(0,0,0,0.18));
       position:relative;z-index:2;flex-shrink:0;cursor:pointer;
-      transition:background .2s,transform .2s;
+      transition:background .3s,border-color .3s,transform .2s;
     }
-    .user-dot.active{background:rgba(0,0,0,0.7);transform:scale(1.3);}
+    .user-dot.active{
+      background:var(--dot-active,rgba(0,0,0,0.75));
+      transform:scale(1.35);
+    }
     #user-thumb{
       position:absolute;left:50%;transform:translate(-50%,-50%);
       width:16px;height:16px;border-radius:50%;
-      background:#fff;border:2px solid rgba(0,0,0,0.5);
-      box-shadow:0 1px 4px rgba(0,0,0,0.25);
+      background:var(--thumb-bg,#fff);
+      border:2px solid var(--thumb-border,rgba(0,0,0,0.45));
+      box-shadow:0 1px 5px rgba(0,0,0,0.2);
       pointer-events:none;z-index:4;
+      transition:background .6s,border-color .6s;
     }
     #user-inp{
       position:absolute;top:0;left:50%;transform:translateX(-50%);
@@ -262,7 +268,6 @@ function buildUserSlider(){
   let line=document.createElement('div');line.id='user-slider-line';track.appendChild(line);
   let thumb=document.createElement('div');thumb.id='user-thumb';track.appendChild(thumb);
 
-  // 5 dots
   let dotEls=[];
   for(let i=0;i<5;i++){
     let dot=document.createElement('div');dot.className='user-dot';
@@ -270,42 +275,65 @@ function buildUserSlider(){
     track.appendChild(dot);dotEls.push(dot);
   }
 
-  // Slider invisível vertical
   let inp=document.createElement('input');inp.type='range';inp.id='user-inp';
   inp.min=0;inp.max=4;inp.step=0.001;inp.value=0;
-  // suporte vertical cross-browser
   inp.setAttribute('orient','vertical');
   track.appendChild(inp);
 
   function update(){
     let pos=parseFloat(inp.value);
     SCENE_POS=pos;
-    // posição do thumb: 0=topo, 4=baixo → invertido
-    let pct=pos/4; // 0..1
+    let pct=pos/4;
     thumb.style.top=(pct*100)+'%';
     dotEls.forEach((d,i)=>d.classList.toggle('active',Math.abs(pos-i)<0.06));
-    applyScenePos(pos, false);
+    applyScenePos(pos,false);
     if(window._refreshAllSliders) window._refreshAllSliders();
   }
-
   inp.oninput=update;
 
   // Touch drag direto na track
   let dragging=false,startY=0,startVal=0;
   track.addEventListener('pointerdown',e=>{
-    dragging=true; startY=e.clientY; startVal=parseFloat(inp.value);
-    track.setPointerCapture(e.pointerId);
-    e.preventDefault();
+    dragging=true;startY=e.clientY;startVal=parseFloat(inp.value);
+    track.setPointerCapture(e.pointerId);e.preventDefault();
   });
   track.addEventListener('pointermove',e=>{
     if(!dragging)return;
     let dy=e.clientY-startY;
     let trackH=track.getBoundingClientRect().height;
-    let delta=(dy/trackH)*4;
-    inp.value=Math.max(0,Math.min(4,startVal+delta));
+    inp.value=Math.max(0,Math.min(4,startVal+(dy/trackH)*4));
     update();
   });
   track.addEventListener('pointerup',()=>dragging=false);
+
+  // Adapta cores ao tema do fundo — chamado pelo draw() via window._updateSliderTheme
+  let _lastTheme='';
+  window._updateSliderTheme=function(){
+    let lum=0.299*BG_COLOR[0]+0.587*BG_COLOR[1]+0.114*BG_COLOR[2];
+    let theme=lum>128?'light':'dark';
+    if(theme===_lastTheme)return;
+    _lastTheme=theme;
+    let r=document.documentElement;
+    if(theme==='light'){
+      // fundo claro → elementos escuros
+      r.style.setProperty('--slider-line','rgba(0,0,0,0.18)');
+      r.style.setProperty('--dot-bg','rgba(0,0,0,0.20)');
+      r.style.setProperty('--dot-border','rgba(0,0,0,0.18)');
+      r.style.setProperty('--dot-active','rgba(0,0,0,0.75)');
+      r.style.setProperty('--thumb-bg','#fff');
+      r.style.setProperty('--thumb-border','rgba(0,0,0,0.45)');
+    } else {
+      // fundo escuro → elementos claros
+      r.style.setProperty('--slider-line','rgba(255,255,255,0.25)');
+      r.style.setProperty('--dot-bg','rgba(255,255,255,0.25)');
+      r.style.setProperty('--dot-border','rgba(255,255,255,0.22)');
+      r.style.setProperty('--dot-active','rgba(255,255,255,0.90)');
+      r.style.setProperty('--thumb-bg','#111');
+      r.style.setProperty('--thumb-border','rgba(255,255,255,0.55)');
+    }
+    // Notifica o Webflow pai também
+    try{window.parent.postMessage({fidenzaTheme:theme},'*');}catch(e){}
+  };
 }
 
 // ── PAINEL DE EDIÇÃO (?edit=true) ──────────────────────────────────────────────
@@ -377,18 +405,24 @@ function buildEditUI(){
     saveGrid.appendChild(sb);saveBtns.push(sb);
   }
 
-  // Botão exportar JSON
-  let expBtn=document.createElement('button');expBtn.id='export-btn';expBtn.textContent='📋 Exportar JSON dos presets';
+  // Botão exportar JSON + textarea para copiar
+  let expBtn=document.createElement('button');expBtn.id='export-btn';expBtn.textContent='📋 Mostrar JSON dos presets';
   expBtn.onclick=()=>{
     let json=JSON.stringify(SCENE_PRESETS,null,2);
-    navigator.clipboard.writeText(json).then(()=>{
-      expBtn.textContent='✓ Copiado!';
-      setTimeout(()=>expBtn.textContent='📋 Exportar JSON dos presets',2000);
-    }).catch(()=>{
-      // fallback: abre janela com o JSON
-      let w=window.open('','_blank');
-      w.document.write('<pre style="font-family:monospace;font-size:12px;padding:20px">'+json+'</pre>');
-    });
+    let existing=document.getElementById('export-textarea');
+    if(existing){ existing.parentElement.remove(); return; }
+    let wrap=document.createElement('div');
+    wrap.style.cssText='margin-top:6px;display:flex;flex-direction:column;gap:4px;';
+    let ta=document.createElement('textarea');ta.id='export-textarea';
+    ta.value=json;
+    ta.style.cssText='width:100%;height:180px;background:#0a0a0a;color:#4f4;border:1px solid #4f4;font-family:monospace;font-size:9px;padding:6px;resize:none;border-radius:3px;';
+    ta.onclick=()=>ta.select();
+    let hint=document.createElement('div');
+    hint.textContent='👆 Clique na área para selecionar tudo, depois copie';
+    hint.style.cssText='color:#888;font-size:9px;font-family:monospace;text-align:center;';
+    wrap.appendChild(ta);wrap.appendChild(hint);
+    expBtn.parentElement.insertBefore(wrap,expBtn.nextSibling);
+    ta.select();
   };
   panel.appendChild(expBtn);
 
