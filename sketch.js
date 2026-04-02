@@ -216,8 +216,8 @@ function hexToRgb(h){return{r:parseInt(h.slice(1,3),16),g:parseInt(h.slice(3,5),
 function buildUserSlider(){
   const ARC_W = 232;
   //const ARC_H = 620;
-  const ARC_H = window.innerHeight * 0.2;
-  const WRAP_RIGHT = 1;
+  const ARC_H = window.innerHeight * 0.4;
+  const WRAP_RIGHT = 0;
   const R = 1200;
   const CX = ARC_W + 620;
   const CY = ARC_H / 2;
@@ -234,7 +234,7 @@ function buildUserSlider(){
     #usr-wrap{
       position:fixed;right:${WRAP_RIGHT}px;top:50%;transform:translateY(-50%);
       width:${ARC_W}px;height:${ARC_H}px;z-index:300;
-      pointer-events:auto;touch-action:none;user-select:none;
+      pointer-events:auto;touch-action:pan-y;user-select:none;
       display:flex;align-items:center;justify-content:center;
     }
     #usr-arc{
@@ -376,7 +376,7 @@ function buildUserSlider(){
       const s=samples[i];
       const dx=x-s.x;
       const dy=y-s.y;
-      const d=dx*dx+dy*dy;
+      const d=dx*dx+dy*dy*0.6;
       if(d<bestD){ bestD=d; best=s; }
     }
     return best.t*4;
@@ -466,8 +466,8 @@ function buildUserSlider(){
       r.style.setProperty('--s-label',      'rgba(0,0,0,0.42)');
       r.style.setProperty('--s-label-active','rgba(0,0,0,0.94)');
     } else {
-      r.style.setProperty('--s-segment-fill','rgba(255,255,255,0.12)');
-      r.style.setProperty('--s-line',       'rgba(255,255,255,0.38)');
+      r.style.setProperty('--s-segment-fill','rgba(255,255,255,0.18)');
+      r.style.setProperty('--s-line',       'rgba(255,255,255,0.65)');
       r.style.setProperty('--s-fill',       'rgba(255,255,255,0.96)');
       r.style.setProperty('--s-dot',        'rgba(255,255,255,0.55)');
       r.style.setProperty('--s-dot-active', 'rgba(255,255,255,1)');
