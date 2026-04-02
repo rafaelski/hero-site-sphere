@@ -216,14 +216,15 @@ function hexToRgb(h){return{r:parseInt(h.slice(1,3),16),g:parseInt(h.slice(3,5),
 function buildUserSlider(){
   const SLIDER_W = Math.min(440, Math.max(330, window.innerWidth * 0.31));
   const SLIDER_H = 64;
-  const PADDING_X = 38;
-  const WRAP_TOP = Math.max(82, window.innerHeight * 0.13);
+  const PADDING_X = 28;
+  //const WRAP_TOP = Math.max(82, window.innerHeight * 0.18);
+  const WRAP_TOP = window.innerHeight * 0.18;
   const ICONS = ['spark','double','split','orbit','tilt'];
 
   const HINT_FORWARD_MS = 3000;
   const HINT_BACK_MS = 1000;
   const HINT_START_DELAY_MS = 700;
-  const HINT_MIDDLE_DELAY_MS = 300;
+  const HINT_MIDDLE_DELAY_MS = 600;
   const THUMB_ACTIVE_COLOR = '#E6FF3F';
 
   let style=document.createElement('style');
@@ -315,9 +316,7 @@ function buildUserSlider(){
       transition:
         transform .34s cubic-bezier(.22,.8,.22,1),
         fill .34s ease,
-        stroke .34s ease,
-        cx .32s cubic-bezier(.22,.8,.22,1),
-        cy .32s cubic-bezier(.22,.8,.22,1);
+        stroke .34s ease;
     }
     #usr-arc .thumb-ring{
       fill:none;
@@ -494,7 +493,9 @@ function buildUserSlider(){
   }
 
   function easeInOut(t){
-    return t<0.5 ? 2*t*t : 1 - Math.pow(-2*t + 2, 2)/2;
+    return t < 0.5
+      ? 4 * t * t * t
+      : 1 - Math.pow(-2 * t + 2, 3) / 2;
   }
 
   function animateBetween(from, to, dur, done){
