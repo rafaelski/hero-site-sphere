@@ -214,14 +214,15 @@ function hexToRgb(h){return{r:parseInt(h.slice(1,3),16),g:parseInt(h.slice(3,5),
 
 // ── SLIDER DO USUÁRIO ──────────────────────────────────────────────────────────
 function buildUserSlider(){
-  const ARC_W = 190;
-  const ARC_H = 420;
-  const WRAP_RIGHT = 18;
-  const R = 158;
-  const CX = ARC_W - 8;
+  const ARC_W = 230;
+  const ARC_H = 560;
+  const WRAP_RIGHT = 10;
+  const R = 330;
+  const CX = ARC_W + 165;
   const CY = ARC_H / 2;
-  const START_A = -Math.PI * 0.78;
-  const END_A = Math.PI * 0.78;
+  const START_A = Math.PI * 0.79;
+  const END_A = Math.PI * 1.21;
+  const LABEL_OFFSET_X = 38;
   const ICONS = ['slash','double','split','orbit','tilt'];
 
   const arcPath = describeArc(CX, CY, R, START_A, END_A);
@@ -285,10 +286,10 @@ function buildUserSlider(){
       font-variant-numeric:tabular-nums; letter-spacing:-0.02em;
     }
     @media (max-width: 900px){
-      #usr-wrap{ right:8px; transform:translateY(-50%) scale(.88); transform-origin:right center; }
+      #usr-wrap{ right:4px; transform:translateY(-50%) scale(.88); transform-origin:right center; }
     }
     @media (max-width: 640px){
-      #usr-wrap{ transform:translateY(-50%) scale(.72); }
+      #usr-wrap{ right:0; transform:translateY(-50%) scale(.70); }
     }
   `;
   document.head.appendChild(style);
@@ -337,7 +338,7 @@ function buildUserSlider(){
 
     const item=document.createElement('div');
     item.className='usr-item';
-    item.style.left=(pt.x+34)+'px';
+    item.style.left=(pt.x+LABEL_OFFSET_X)+'px';
     item.style.top=pt.y+'px';
     item.innerHTML=`
       <span class="usr-icon">${buildAbstractIcon(ICONS[i % ICONS.length])}</span>
@@ -415,7 +416,7 @@ function buildUserSlider(){
     let best=null;
     for(let i=0;i<5;i++){
       const pt=pointOnArc(i/4);
-      const labelX=pt.x+34;
+      const labelX=pt.x+LABEL_OFFSET_X;
       const dx=x-labelX;
       const dy=y-pt.y;
       const dd=Math.sqrt(dx*dx+dy*dy);
