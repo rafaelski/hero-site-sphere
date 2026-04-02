@@ -216,178 +216,145 @@ function hexToRgb(h){return{r:parseInt(h.slice(1,3),16),g:parseInt(h.slice(3,5),
 function buildUserSlider(){
   // ── Ajuste de posição aqui ──
   const SLIDER_RIGHT  = 24;   // distância da borda direita (px)
-  const SLIDER_HEIGHT = 220;  // altura total da trilha (px)
+  const SLIDER_HEIGHT = 220;  // altura visual da trilha (px)
   // ────────────────────────────
 
   let style=document.createElement('style');
   style.textContent=`
     #usr-wrap{
-      position:fixed;
-      right:${SLIDER_RIGHT}px;
-      top:50%;transform:translateY(-50%);
-      z-index:300;
-      display:flex;flex-direction:column;align-items:center;gap:0;
-      pointer-events:auto;touch-action:none;
-      user-select:none;
+      position:fixed;right:${SLIDER_RIGHT}px;top:50%;transform:translateY(-50%);
+      z-index:300;display:flex;flex-direction:column;align-items:center;
+      pointer-events:auto;touch-action:none;user-select:none;
     }
     #usr-track{
-      position:relative;
-      width:28px;
-      height:${SLIDER_HEIGHT}px;
-      display:flex;flex-direction:column;
-      align-items:center;justify-content:space-between;
+      position:relative;width:28px;height:${SLIDER_HEIGHT}px;
+      display:flex;flex-direction:column;align-items:center;justify-content:space-between;
+      cursor:pointer;
     }
-    /* linha de fundo */
     #usr-line-bg{
       position:absolute;left:50%;transform:translateX(-50%);
       top:0;bottom:0;width:1px;
-      background:var(--s-line,rgba(255,255,255,0.15));
-      border-radius:1px;transition:background .5s;
+      background:var(--s-line,rgba(255,255,255,0.15));border-radius:1px;
+      transition:background .5s;
     }
-    /* linha de progresso (cima até o thumb) */
     #usr-line-fill{
       position:absolute;left:50%;transform:translateX(-50%);
       top:0;width:1px;height:0%;
-      background:var(--s-fill,rgba(255,255,255,0.55));
-      border-radius:1px;transition:background .5s;
+      background:var(--s-fill,rgba(255,255,255,0.55));border-radius:1px;
+      transition:background .5s;
     }
-    /* dots */
     .usr-dot{
       width:5px;height:5px;border-radius:50%;
       background:var(--s-dot,rgba(255,255,255,0.35));
       position:relative;z-index:2;flex-shrink:0;
-      cursor:pointer;
       transition:background .3s,transform .25s,width .25s,height .25s;
+      pointer-events:none;
     }
-    .usr-dot:hover{transform:scale(1.6);}
     .usr-dot.active{
       width:9px;height:9px;
       background:var(--s-dot-active,rgba(255,255,255,0.95));
-      transform:translateX(0) scale(1);
     }
-    /* thumb */
     #usr-thumb{
-      position:absolute;left:50%;
-      transform:translate(-50%,-50%);
+      position:absolute;left:50%;transform:translate(-50%,-50%);
       width:11px;height:11px;border-radius:50%;
       background:var(--s-thumb,#fff);
-      box-shadow:0 0 0 2px var(--s-thumb-ring,rgba(255,255,255,0.3)),
-                 0 2px 8px rgba(0,0,0,0.35);
+      box-shadow:0 0 0 2px var(--s-thumb-ring,rgba(255,255,255,0.3)),0 2px 8px rgba(0,0,0,0.35);
       pointer-events:none;z-index:4;
-      transition:background .5s,box-shadow .5s,top .05s;
-    }
-    /* input invisível */
-    #usr-inp{
-      position:absolute;top:0;left:50%;transform:translateX(-50%);
-      width:44px;height:${SLIDER_HEIGHT}px;
-      opacity:0;cursor:pointer;z-index:5;
-      writing-mode:vertical-lr;direction:rtl;
-      -webkit-appearance:slider-vertical;
+      transition:background .5s,box-shadow .5s;
     }
   `;
   document.head.appendChild(style);
 
   let wrap =document.createElement('div');wrap.id='usr-wrap';document.body.appendChild(wrap);
   let track=document.createElement('div');track.id='usr-track';wrap.appendChild(track);
-
   let lineBg  =document.createElement('div');lineBg.id='usr-line-bg';track.appendChild(lineBg);
   let lineFill=document.createElement('div');lineFill.id='usr-line-fill';track.appendChild(lineFill);
-  let thumb   =document.createElement('div');thumb.id='usr-thumb';track.appendChild(thumb);
+  let thumb=document.createElement('div');thumb.id='usr-thumb';track.appendChild(thumb);
 
-  // 5 dots
+  // 5 dots posicionados de forma absoluta ao longo da trilha
   let dotEls=[];
   for(let i=0;i<5;i++){
     let dot=document.createElement('div');
     dot.className='usr-dot';
-    dot.addEventListener('pointerdown',e=>{
-      e.stopPropagation();
-      // crava no preset exato
-      inp.value=i;
-      SCENE_POS=i;
-      updateVisuals(i);
-      applyScenePos(i,false);
-      if(window._refreshAllSliders) window._refreshAllSliders();
-    });
+    dot.style.cssText=`position:absolute;left:50%;transform:translateX(-50%);top:${(i/4)*100}%;margin-top:-2.5px;`;
     track.appendChild(dot);
     dotEls.push(dot);
   }
 
-  let inp=document.createElement('input');
-  inp.type='range';inp.id='usr-inp';
-  inp.min=0;inp.max=4;inp.step=0.001;inp.value=0;
-  inp.setAttribute('orient','vertical');
-  track.appendChild(inp);
-
-  function updateVisuals(pos){
-    let pct=pos/4; // 0..1 (0=topo)
-    thumb.style.top=(pct*100)+'%';
-    lineFill.style.height=(pct*100)+'%';
-    dotEls.forEach((d,i)=>{
-      let snap=Math.abs(pos-i)<0.05;
-      d.classList.toggle('active',snap);
-    });
+  // Converte clientY → valor 0..4 usando o rect real da track
+  function yToVal(clientY){
+    let r=track.getBoundingClientRect();
+    let pct=Math.max(0,Math.min(1,(clientY-r.top)/r.height));
+    return pct*4;
   }
 
   let _dragging=false;
+  let _curVal=0;
 
-  function onMove(){
-    let pos=parseFloat(inp.value);
-    SCENE_POS=pos;
-    updateVisuals(pos);
-    applyScenePos(pos,false);
+  function setVal(v, doInit){
+    _curVal=v;
+    SCENE_POS=v;
+    let pct=v/4;
+    thumb.style.top=(pct*100)+'%';
+    lineFill.style.height=(pct*100)+'%';
+    dotEls.forEach((d,i)=>d.classList.toggle('active',Math.abs(v-i)<0.06));
+    applyScenePos(v,doInit||false);
     if(window._refreshAllSliders) window._refreshAllSliders();
-    // atualiza tema em tempo real enquanto arrasta
     if(_dragging && window._updateSliderTheme) window._updateSliderTheme(true);
   }
 
-  inp.addEventListener('pointerdown',()=>{ _dragging=true; });
-  inp.addEventListener('pointerup',  ()=>{ _dragging=false; });
-  inp.oninput=onMove;
-
-  // drag touch direto na trilha
-  let _startY=0,_startVal=0;
+  // clique/drag na track
   track.addEventListener('pointerdown',e=>{
-    if(e.target===inp) return;
-    _dragging=true;_startY=e.clientY;_startVal=parseFloat(inp.value);
-    track.setPointerCapture(e.pointerId);e.preventDefault();
+    _dragging=true;
+    track.setPointerCapture(e.pointerId);
+    // verifica se clicou perto de um dot — crava no preset
+    let r=track.getBoundingClientRect();
+    let pct=(e.clientY-r.top)/r.height;
+    let nearest=Math.round(pct*4);
+    let nearestPct=nearest/4;
+    if(Math.abs(pct-nearestPct)<0.08){
+      setVal(nearest);
+    } else {
+      setVal(yToVal(e.clientY));
+    }
+    e.preventDefault();
   });
+
   track.addEventListener('pointermove',e=>{
-    if(!_dragging||e.target===inp)return;
-    let dy=e.clientY-_startY;
-    let newVal=Math.max(0,Math.min(4,_startVal+(dy/SLIDER_HEIGHT)*4));
-    inp.value=newVal;
-    onMove();
+    if(!_dragging) return;
+    setVal(yToVal(e.clientY));
   });
-  track.addEventListener('pointerup',()=>_dragging=false);
+
+  track.addEventListener('pointerup',  ()=>_dragging=false);
+  track.addEventListener('pointercancel',()=>_dragging=false);
 
   // ── Tema adaptativo ────────────────────────────────────────────────────────
   let _lastTheme='';
   window._updateSliderTheme=function(force){
     let lum=0.299*BG_COLOR[0]+0.587*BG_COLOR[1]+0.114*BG_COLOR[2];
     let theme=lum>128?'light':'dark';
-    if(!force && theme===_lastTheme) return;
+    if(!force&&theme===_lastTheme) return;
     _lastTheme=theme;
     let r=document.documentElement;
     if(theme==='light'){
-      r.style.setProperty('--s-line',        'rgba(0,0,0,0.12)');
-      r.style.setProperty('--s-fill',        'rgba(0,0,0,0.50)');
-      r.style.setProperty('--s-dot',         'rgba(0,0,0,0.25)');
-      r.style.setProperty('--s-dot-active',  'rgba(0,0,0,0.85)');
-      r.style.setProperty('--s-thumb',       '#111');
-      r.style.setProperty('--s-thumb-ring',  'rgba(0,0,0,0.15)');
+      r.style.setProperty('--s-line',       'rgba(0,0,0,0.12)');
+      r.style.setProperty('--s-fill',       'rgba(0,0,0,0.50)');
+      r.style.setProperty('--s-dot',        'rgba(0,0,0,0.25)');
+      r.style.setProperty('--s-dot-active', 'rgba(0,0,0,0.85)');
+      r.style.setProperty('--s-thumb',      '#111');
+      r.style.setProperty('--s-thumb-ring', 'rgba(0,0,0,0.15)');
     } else {
-      r.style.setProperty('--s-line',        'rgba(255,255,255,0.15)');
-      r.style.setProperty('--s-fill',        'rgba(255,255,255,0.55)');
-      r.style.setProperty('--s-dot',         'rgba(255,255,255,0.35)');
-      r.style.setProperty('--s-dot-active',  'rgba(255,255,255,0.95)');
-      r.style.setProperty('--s-thumb',       '#fff');
-      r.style.setProperty('--s-thumb-ring',  'rgba(255,255,255,0.25)');
+      r.style.setProperty('--s-line',       'rgba(255,255,255,0.15)');
+      r.style.setProperty('--s-fill',       'rgba(255,255,255,0.55)');
+      r.style.setProperty('--s-dot',        'rgba(255,255,255,0.35)');
+      r.style.setProperty('--s-dot-active', 'rgba(255,255,255,0.95)');
+      r.style.setProperty('--s-thumb',      '#fff');
+      r.style.setProperty('--s-thumb-ring', 'rgba(255,255,255,0.25)');
     }
     try{window.parent.postMessage({fidenzaTheme:theme},'*');}catch(e){}
   };
 
-  // Atualiza tema a cada 500ms
-  setInterval(()=>{ if(!_dragging && window._updateSliderTheme) window._updateSliderTheme(); }, 500);
+  setInterval(()=>{ if(!_dragging&&window._updateSliderTheme) window._updateSliderTheme(); },500);
 }
 
 // ── PAINEL DE EDIÇÃO (?edit=true) ──────────────────────────────────────────────
