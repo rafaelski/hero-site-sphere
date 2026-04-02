@@ -221,6 +221,12 @@ function buildUserSlider(){
   const WRAP_LEFT = window.innerWidth * 0.55;
   const ICONS = ['slash','double','split','orbit','tilt'];
 
+  const HINT_FORWARD_MS = 3000;
+  const HINT_BACK_MS = 1000;
+  const HINT_START_DELAY_MS = 700;
+  const HINT_MIDDLE_DELAY_MS = 300;
+  const THUMB_ACTIVE_COLOR = '#E6FF3F';
+
   let style=document.createElement('style');
   style.textContent=`
     #usr-wrap{
@@ -312,7 +318,7 @@ function buildUserSlider(){
     #usr-arc .thumb{
       fill:var(--s-thumb,#fff);
       filter:drop-shadow(0 2px 8px rgba(0,0,0,0.22));
-      transition:fill .35s ease;
+      transition:fill .35s ease, r .28s ease, transform .28s ease;
     }
     .usr-item{
       position:absolute;
@@ -449,6 +455,13 @@ function buildUserSlider(){
     thumb.setAttribute('cy',pt.y);
     thumbRing.setAttribute('cx',pt.x);
     thumbRing.setAttribute('cy',pt.y);
+
+    const moving = _dragging || _hintPlaying;
+    thumb.setAttribute('r', moving ? 6.8 : 4.4);
+    thumbRing.setAttribute('r', moving ? 13.5 : 10);
+    thumb.style.fill = moving ? THUMB_ACTIVE_COLOR : 'var(--s-thumb,#fff)';
+    thumbRing.style.stroke = moving ? 'rgba(230,255,63,0.45)' : 'var(--s-thumb-ring,rgba(255,255,255,0.35))';
+    
     fillLine.setAttribute('x2', pt.x);
     fillLine.setAttribute('y2', TRACK_Y);
 
@@ -498,18 +511,18 @@ function buildUserSlider(){
     setVal(0,false);
     setTimeout(()=>{
       if(!_hintPlaying) return;
-      animateBetween(0,1,900,()=>{
+       animateBetween(0,1,HINT_FORWARD_MS,()=>{
         if(!_hintPlaying) return;
         setTimeout(()=>{
           if(!_hintPlaying) return;
-          animateBetween(1,0,800,()=>{
+          animateBetween(1,0,HINT_BACK_MS,()=>{
             _hintPlaying=false;
             _hintRAF=null;
             setVal(0,false);
           });
-        },180);
+        },HINT_MIDDLE_DELAY_MS);
       });
-    },450);
+    },HINT_START_DELAY_MS);
   }
 
   arc.addEventListener('pointerdown',e=>{
