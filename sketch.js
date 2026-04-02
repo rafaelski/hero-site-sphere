@@ -215,8 +215,8 @@ function hexToRgb(h){return{r:parseInt(h.slice(1,3),16),g:parseInt(h.slice(3,5),
 // ── SLIDER DO USUÁRIO ──────────────────────────────────────────────────────────
 function buildUserSlider(){
   const SLIDER_W = Math.min(440, Math.max(330, window.innerWidth * 0.31));
-  const SLIDER_H = 64;
-  const PADDING_X = 28;
+  const SLIDER_H = 54;
+  const PADDING_X = 38;
   //const WRAP_TOP = Math.max(82, window.innerHeight * 0.18);
   const WRAP_TOP = window.innerHeight * 0.18;
   const ICONS = ['spark','double','split','orbit','tilt'];
@@ -225,7 +225,7 @@ function buildUserSlider(){
   const HINT_BACK_MS = 1000;
   const HINT_START_DELAY_MS = 700;
   const HINT_MIDDLE_DELAY_MS = 600;
-  const THUMB_ACTIVE_COLOR = '#E6FF3F';
+  const THUMB_ACTIVE_COLOR = '#e8fe41';
 
   let style=document.createElement('style');
   style.textContent=`
