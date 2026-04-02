@@ -214,25 +214,27 @@ function hexToRgb(h){return{r:parseInt(h.slice(1,3),16),g:parseInt(h.slice(3,5),
 
 // ── SLIDER DO USUÁRIO ──────────────────────────────────────────────────────────
 function buildUserSlider(){
-  const ARC_W = 232;
-  const ARC_H = Math.min(window.innerHeight * 0.38, 620);
+  const ARC_W = 214;
+  const ARC_H = Math.min(window.innerHeight * 0.32, 360);
   const WRAP_RIGHT = 0;
-  const R = ARC_H * 2.85;
-  const CX = R + 8;
+  const WRAP_TOP = 36;
+  const R = ARC_H * 1.82;
+  const CX = R + 10;
   const CY = ARC_H / 2;
-  const START_A = Math.PI + 0.40;
-  const END_A = Math.PI - 0.40;
+  const START_A = Math.PI + 0.58;
+  const END_A = Math.PI - 0.58;
   const ICONS = ['slash','double','split','orbit','tilt'];
-  const LABEL_OFFSET_X = 56;
+  const LABEL_OFFSET_X = 50;
 
   const arcPath = describeArc(CX, CY, R, START_A, END_A, 0);
-  const guidePath = describeArc(CX - 12, CY, R - 20, START_A + 0.015, END_A - 0.015, 0);
-  const fillShape = describeSegmentFill(CX, CY, R, START_A, END_A, ARC_W + 10);
+  const guidePath = describeArc(CX - 12, CY, R - 18, START_A + 0.02, END_A - 0.02, 0);
+  const guidePath2 = describeArc(CX - 24, CY, R - 36, START_A + 0.035, END_A - 0.035, 0);
 
   let style=document.createElement('style');
   style.textContent=`
     #usr-wrap{
-      position:fixed;right:${WRAP_RIGHT}px;top:50%;transform:translateY(-50%);
+      position:fixed;right:${WRAP_RIGHT}px;top:${WRAP_TOP}%;
+      transform:translateY(-50%);
       width:${ARC_W}px;height:${ARC_H}px;z-index:300;
       pointer-events:auto;touch-action:pan-y;user-select:none;
       display:flex;align-items:center;justify-content:center;
@@ -242,28 +244,38 @@ function buildUserSlider(){
       overflow:visible;cursor:pointer;
     }
     #usr-arc svg{width:100%;height:100%;display:block;overflow:visible;}
-    #usr-arc .arc-segment-fill{
-      fill:var(--s-segment-fill,rgba(255,255,255,0.07));
-      stroke:none;transition:fill .45s ease,opacity .3s ease;
+    #usr-arc .fill-disc-main{
+      fill:var(--s-disc-main,rgba(255,255,255,0.055));
+      stroke:none;
+      transition:fill .45s ease,opacity .3s ease;
     }
-    #usr-arc .arc-segment-glow{
-      fill:var(--s-segment-glow,rgba(255,255,255,0.06));
-      stroke:none;filter:blur(18px);
-      transform-origin:center center;
+    #usr-arc .fill-disc-soft{
+      fill:var(--s-disc-soft,rgba(255,255,255,0.038));
+      stroke:none;filter:blur(22px);
+      transition:fill .45s ease,opacity .3s ease;
+    }
+    #usr-arc .fill-disc-small{
+      fill:var(--s-disc-small,rgba(255,255,255,0.028));
+      stroke:none;filter:blur(10px);
       transition:fill .45s ease,opacity .3s ease;
     }
     #usr-arc .arc-bg{
-      fill:none;stroke:var(--s-line,rgba(255,255,255,0.22));stroke-width:1.15;
+      fill:none;stroke:var(--s-line,rgba(255,255,255,0.26));stroke-width:1.1;
       transition:stroke .45s ease;
     }
+    #usr-arc .arc-fill{
+      fill:none;stroke:var(--s-fill,rgba(255,255,255,0.92));stroke-width:1.8;
+      stroke-linecap:round;transition:stroke .45s ease,opacity .3s ease;
+    }
     #usr-arc .arc-guide{
-      fill:none;stroke:var(--s-guide,rgba(255,255,255,0.16));stroke-width:1;
-      stroke-dasharray:2.4 7;stroke-linecap:round;
+      fill:none;stroke:var(--s-guide,rgba(255,255,255,0.14));stroke-width:1;
+      stroke-dasharray:2 7;stroke-linecap:round;
       transition:stroke .45s ease,opacity .3s ease;
     }
-    #usr-arc .arc-fill{
-      fill:none;stroke:var(--s-fill,rgba(255,255,255,0.92));stroke-width:1.9;
-      stroke-linecap:round;transition:stroke .45s ease,opacity .3s ease;
+    #usr-arc .arc-guide.secondary{
+      stroke:var(--s-guide-2,rgba(255,255,255,0.1));
+      stroke-dasharray:1.4 8;
+      stroke-width:.95;
     }
     #usr-arc .arc-dot{
       fill:var(--s-dot,rgba(255,255,255,0.34));
@@ -277,37 +289,36 @@ function buildUserSlider(){
       transition:fill .45s ease;
     }
     #usr-arc .arc-thumb-ring{
-      fill:none;stroke:var(--s-thumb-ring,rgba(255,255,255,0.28));stroke-width:1.25;
+      fill:none;stroke:var(--s-thumb-ring,rgba(255,255,255,0.3));stroke-width:1.15;
       transition:stroke .45s ease;
     }
     .usr-item{
       position:absolute;display:flex;align-items:center;gap:8px;
       transform:translate(-50%,-50%);pointer-events:none;
-      color:var(--s-label,rgba(255,255,255,0.62));
+      color:var(--s-label,rgba(255,255,255,0.7));
       transition:color .3s ease,opacity .3s ease,transform .3s ease;
-      opacity:.94;
+      opacity:.96;
       white-space:nowrap;
     }
     .usr-item.active{
       color:var(--s-label-active,rgba(255,255,255,1));
       opacity:1;
     }
-    .usr-item.active .usr-icon{ transform:scale(1.04); }
-    .usr-item.active .usr-index{ letter-spacing:0; }
-    .usr-icon{ width:16px;height:16px;display:block;flex:0 0 auto; opacity:.92; transition:transform .25s ease; }
+    .usr-item.active .usr-icon{ transform:scale(1.03); }
+    .usr-icon{ width:15px;height:15px;display:block;flex:0 0 auto; opacity:.9; transition:transform .25s ease; }
     .usr-icon svg{ width:100%;height:100%;overflow:visible; }
     .usr-icon circle,.usr-icon path,.usr-icon line,.usr-icon ellipse{
-      stroke:currentColor; fill:none; stroke-width:1.75; stroke-linecap:round; stroke-linejoin:round;
+      stroke:currentColor; fill:none; stroke-width:1.7; stroke-linecap:round; stroke-linejoin:round;
     }
     .usr-index{
       font:600 18px/1.05 Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
       font-variant-numeric:tabular-nums; letter-spacing:-0.02em;
     }
     @media (max-width: 900px){
-      #usr-wrap{ right:0; transform:translateY(-50%) scale(.82); transform-origin:right center; }
+      #usr-wrap{ right:0; top:34%; transform:translateY(-50%) scale(.84); transform-origin:right center; }
     }
     @media (max-width: 640px){
-      #usr-wrap{ transform:translateY(-50%) scale(.66); }
+      #usr-wrap{ top:33%; transform:translateY(-50%) scale(.68); }
     }
   `;
   document.head.appendChild(style);
@@ -322,14 +333,18 @@ function buildUserSlider(){
 
   arc.innerHTML=`
     <svg viewBox="0 0 ${ARC_W} ${ARC_H}" aria-hidden="true">
-      <path class="arc-segment-glow" d="${fillShape}"></path>
-      <path class="arc-segment-fill" d="${fillShape}"></path>
+      <circle class="fill-disc-soft" cx="${CX}" cy="${CY}" r="${R * 1.01}"></circle>
+      <circle class="fill-disc-main" cx="${CX}" cy="${CY}" r="${R}"></circle>
+      <circle class="fill-disc-small" cx="${CX - R * 0.15}" cy="${CY - ARC_H * 0.18}" r="${R * 0.28}"></circle>
+      <circle class="fill-disc-small" cx="${CX - R * 0.09}" cy="${CY + ARC_H * 0.06}" r="${R * 0.18}"></circle>
+      <circle class="fill-disc-small" cx="${CX - R * 0.20}" cy="${CY + ARC_H * 0.24}" r="${R * 0.11}"></circle>
       <path class="arc-guide" d="${guidePath}"></path>
+      <path class="arc-guide secondary" d="${guidePath2}"></path>
       <path class="arc-bg" d="${arcPath}"></path>
       <path class="arc-fill" d="${arcPath}"></path>
       <g class="arc-points"></g>
-      <circle class="arc-thumb-ring" cx="0" cy="0" r="9.5"></circle>
-      <circle class="arc-thumb" cx="0" cy="0" r="4.2"></circle>
+      <circle class="arc-thumb-ring" cx="0" cy="0" r="9"></circle>
+      <circle class="arc-thumb" cx="0" cy="0" r="4.1"></circle>
     </svg>
   `;
 
@@ -359,7 +374,7 @@ function buildUserSlider(){
     dot.setAttribute('class','arc-dot');
     dot.setAttribute('cx',pt.x);
     dot.setAttribute('cy',pt.y);
-    dot.setAttribute('r',2.5);
+    dot.setAttribute('r',2.4);
     pointsGroup.appendChild(dot);
     dotEls.push(dot);
 
@@ -390,7 +405,7 @@ function buildUserSlider(){
       const s=samples[i];
       const dx=x-s.x;
       const dy=y-s.y;
-      const d=dx*dx+dy*dy*0.6;
+      const d=dx*dx+dy*dy*0.58;
       if(d<bestD){ bestD=d; best=s; }
     }
     return best.t*4;
@@ -415,7 +430,7 @@ function buildUserSlider(){
       const dist=Math.abs(_curVal-(4-i));
       const active=dist<0.16;
       d.classList.toggle('active',active);
-      d.setAttribute('r',active ? 4.6 : 2.5);
+      d.setAttribute('r',active ? 4.5 : 2.4);
     });
     itemEls.forEach((el,i)=>{
       const active=Math.abs(_curVal-(4-i))<0.16;
@@ -471,11 +486,13 @@ function buildUserSlider(){
     _lastTheme=theme;
     let r=document.documentElement;
     if(theme==='light'){
-      r.style.setProperty('--s-segment-fill','rgba(0,0,0,0.035)');
-      r.style.setProperty('--s-segment-glow','rgba(0,0,0,0.05)');
+      r.style.setProperty('--s-disc-main','rgba(0,0,0,0.034)');
+      r.style.setProperty('--s-disc-soft','rgba(0,0,0,0.05)');
+      r.style.setProperty('--s-disc-small','rgba(0,0,0,0.028)');
       r.style.setProperty('--s-line',       'rgba(0,0,0,0.12)');
       r.style.setProperty('--s-guide',      'rgba(0,0,0,0.14)');
-      r.style.setProperty('--s-fill',       'rgba(0,0,0,0.46)');
+      r.style.setProperty('--s-guide-2',    'rgba(0,0,0,0.09)');
+      r.style.setProperty('--s-fill',       'rgba(0,0,0,0.48)');
       r.style.setProperty('--s-dot',        'rgba(0,0,0,0.22)');
       r.style.setProperty('--s-dot-active', 'rgba(0,0,0,0.88)');
       r.style.setProperty('--s-thumb',      '#111');
@@ -483,10 +500,12 @@ function buildUserSlider(){
       r.style.setProperty('--s-label',      'rgba(0,0,0,0.42)');
       r.style.setProperty('--s-label-active','rgba(0,0,0,0.92)');
     } else {
-      r.style.setProperty('--s-segment-fill','rgba(255,255,255,0.055)');
-      r.style.setProperty('--s-segment-glow','rgba(255,255,255,0.065)');
+      r.style.setProperty('--s-disc-main','rgba(255,255,255,0.06)');
+      r.style.setProperty('--s-disc-soft','rgba(255,255,255,0.075)');
+      r.style.setProperty('--s-disc-small','rgba(255,255,255,0.035)');
       r.style.setProperty('--s-line',       'rgba(255,255,255,0.30)');
-      r.style.setProperty('--s-guide',      'rgba(255,255,255,0.17)');
+      r.style.setProperty('--s-guide',      'rgba(255,255,255,0.16)');
+      r.style.setProperty('--s-guide-2',    'rgba(255,255,255,0.10)');
       r.style.setProperty('--s-fill',       'rgba(255,255,255,0.92)');
       r.style.setProperty('--s-dot',        'rgba(255,255,255,0.36)');
       r.style.setProperty('--s-dot-active', 'rgba(255,255,255,1)');
@@ -510,13 +529,6 @@ function buildUserSlider(){
     const delta = Math.abs(endAngle - startAngle);
     const largeArcFlag = delta <= Math.PI ? 0 : 1;
     return `M ${start.x} ${start.y} A ${r} ${r} 0 ${largeArcFlag} ${sweepFlag} ${end.x} ${end.y}`;
-  }
-  function describeSegmentFill(cx, cy, r, startAngle, endAngle, edgeX){
-    const start = polarToCartesian(cx, cy, r, startAngle);
-    const end = polarToCartesian(cx, cy, r, endAngle);
-    const delta = Math.abs(endAngle - startAngle);
-    const largeArcFlag = delta <= Math.PI ? 0 : 1;
-    return `M ${start.x} ${start.y} A ${r} ${r} 0 ${largeArcFlag} 0 ${end.x} ${end.y} L ${edgeX} ${end.y} L ${edgeX} ${start.y} Z`;
   }
   function buildAbstractIcon(type){
     switch(type){
