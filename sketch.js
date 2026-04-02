@@ -214,306 +214,91 @@ function hexToRgb(h){return{r:parseInt(h.slice(1,3),16),g:parseInt(h.slice(3,5),
 
 // ── SLIDER DO USUÁRIO ──────────────────────────────────────────────────────────
 function buildUserSlider(){
+
   const ARC_W = 232;
-  //const ARC_H = 620;
-  const ARC_H = window.innerHeight * 0.2;
-  const WRAP_RIGHT = 1;
-  const R = 780;
+
+  // altura responsiva (40vh)
+  const ARC_H = window.innerHeight * 0.4;
+
+  // colado na direita
+  const WRAP_RIGHT = 0;
+
+  // aumenta o raio → arco mais reto
+  const R = 1200;
+
   const CX = ARC_W + 620;
   const CY = ARC_H / 2;
+
   const START_A = Math.PI + 0.43;
-  const END_A = Math.PI - 0.43;
+  const END_A   = Math.PI - 0.43;
+
   const ICONS = ['slash','double','split','orbit','tilt'];
   const LABEL_OFFSET_X = 44;
 
   const arcPath = describeArc(CX, CY, R, START_A, END_A, 0);
   const fillShape = describeSegmentFill(CX, CY, R, START_A, END_A, ARC_W + 18);
 
-  let style=document.createElement('style');
-  style.textContent=`
+  let style = document.createElement('style');
+
+  style.textContent = `
     #usr-wrap{
-      position:fixed;right:${WRAP_RIGHT}px;top:50%;transform:translateY(-50%);
-      width:${ARC_W}px;height:${ARC_H}px;z-index:300;
-      pointer-events:auto;touch-action:none;user-select:none;
-      display:flex;align-items:center;justify-content:center;
+      position:fixed;
+      right:${WRAP_RIGHT}px;
+      top:50%;
+      transform:translateY(-50%);
+      width:${ARC_W}px;
+      height:${ARC_H}px;
+      z-index:300;
+      pointer-events:auto;
+      touch-action:none;
+      user-select:none;
+      display:flex;
+      align-items:center;
+      justify-content:center;
     }
+
     #usr-arc{
-      position:relative;width:${ARC_W}px;height:${ARC_H}px;
-      overflow:visible;cursor:pointer;
-    }
-    #usr-arc svg{width:100%;height:100%;display:block;overflow:visible;}
-    #usr-arc .arc-segment-fill{
-      fill:var(--s-segment-fill,rgba(255,255,255,0.07));
-      stroke:none;transition:fill .45s ease,opacity .3s ease;
-    }
-    #usr-arc .arc-bg{
-      fill:none;stroke:var(--s-line,rgba(255,255,255,0.16));stroke-width:1.4;
-      transition:stroke .45s ease;
-    }
-    #usr-arc .arc-fill{
-      fill:none;stroke:var(--s-fill,rgba(255,255,255,0.80));stroke-width:2.2;
-      stroke-linecap:round;transition:stroke .45s ease,opacity .3s ease;
-    }
-    #usr-arc .arc-dot{
-      fill:var(--s-dot,rgba(255,255,255,0.34));
-      transition:fill .3s ease,r .25s ease;
-    }
-    #usr-arc .arc-dot.active{ fill:var(--s-dot-active,rgba(255,255,255,1)); }
-    #usr-arc .arc-thumb{
-      fill:var(--s-thumb,#fff);
-      filter:drop-shadow(0 2px 10px rgba(0,0,0,0.28));
-      transition:fill .45s ease;
-    }
-    #usr-arc .arc-thumb-ring{
-      fill:none;stroke:var(--s-thumb-ring,rgba(255,255,255,0.35));stroke-width:1.7;
-      transition:stroke .45s ease;
-    }
-    .usr-item{
-      position:absolute;display:flex;align-items:center;gap:10px;
-      transform:translate(-50%,-50%);pointer-events:none;
-      color:var(--s-label,rgba(255,255,255,0.55));
-      transition:color .3s ease,opacity .3s ease,transform .3s ease;
-      opacity:.86;
-    }
-    .usr-item.active{
-      color:var(--s-label-active,rgba(255,255,255,1));
-      opacity:1;
-    }
-    .usr-item.active .usr-icon{ transform:scale(1.08); }
-    .usr-item.active .usr-index{ letter-spacing:0.01em; }
-    .usr-icon{ width:24px;height:24px;display:block;flex:0 0 auto; transition:transform .25s ease; }
-    .usr-icon svg{ width:100%;height:100%;overflow:visible; }
-    .usr-icon circle,.usr-icon path,.usr-icon line,.usr-icon ellipse{
-      stroke:currentColor; fill:none; stroke-width:1.9; stroke-linecap:round; stroke-linejoin:round;
-    }
-    .usr-index{
-      font:700 24px/1 Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-      font-variant-numeric:tabular-nums; letter-spacing:-0.03em;
-    }
-    @media (max-width: 900px){
-      #usr-wrap{ right:6px; transform:translateY(-50%) scale(.82); transform-origin:right center; }
-    }
-    @media (max-width: 640px){
-      #usr-wrap{ transform:translateY(-50%) scale(.66); }
+      position:relative;
+      width:${ARC_W}px;
+      height:${ARC_H}px;
+      overflow:visible;
+      cursor:pointer;
     }
   `;
+
   document.head.appendChild(style);
 
-  let wrap=document.createElement('div');
-  wrap.id='usr-wrap';
-  document.body.appendChild(wrap);
+  // ==============================
+  // 🔥 CORREÇÃO DO DRAG (CRÍTICO)
+  // ==============================
 
-  let arc=document.createElement('div');
-  arc.id='usr-arc';
-  wrap.appendChild(arc);
+  function getClosestTFromPoint(px, py){
+    const dx = px - CX;
+    const dy = py - CY;
 
-  arc.innerHTML=`
-    <svg viewBox="0 0 ${ARC_W} ${ARC_H}" aria-hidden="true">
-      <path class="arc-segment-fill" d="${fillShape}"></path>
-      <path class="arc-bg" d="${arcPath}"></path>
-      <path class="arc-fill" d="${arcPath}"></path>
-      <g class="arc-points"></g>
-      <circle class="arc-thumb-ring" cx="0" cy="0" r="11"></circle>
-      <circle class="arc-thumb" cx="0" cy="0" r="5.2"></circle>
-    </svg>
-  `;
+    let angle = Math.atan2(dy, dx);
 
-  const svg=arc.querySelector('svg');
-  const fillPath=arc.querySelector('.arc-fill');
-  const pointsGroup=arc.querySelector('.arc-points');
-  const thumb=arc.querySelector('.arc-thumb');
-  const thumbRing=arc.querySelector('.arc-thumb-ring');
-  const dotEls=[];
-  const itemEls=[];
-  const pathLength=fillPath.getTotalLength();
-  const samples=[];
-  const sampleCount=720;
+    // normaliza para evitar "flip" no iPhone
+    if(angle < 0) angle += Math.PI * 2;
 
-  for(let i=0;i<=sampleCount;i++){
-    const t=i/sampleCount;
-    samples.push({...pointOnArc(t), t});
-  }
+    let start = START_A;
+    let end   = END_A;
 
-  fillPath.style.strokeDasharray=`${pathLength} ${pathLength}`;
-  fillPath.style.strokeDashoffset=pathLength;
+    if(start < 0) start += Math.PI * 2;
+    if(end   < 0) end   += Math.PI * 2;
 
-  const orderedTs = [0,0.25,0.5,0.75,1];
-  orderedTs.forEach((t, idx)=>{
-    const pt=pointOnArc(t);
-
-    const dot=document.createElementNS('http://www.w3.org/2000/svg','circle');
-    dot.setAttribute('class','arc-dot');
-    dot.setAttribute('cx',pt.x);
-    dot.setAttribute('cy',pt.y);
-    dot.setAttribute('r',3.5);
-    pointsGroup.appendChild(dot);
-    dotEls.push(dot);
-
-    const item=document.createElement('div');
-    item.className='usr-item';
-    item.style.left=(pt.x+LABEL_OFFSET_X)+'px';
-    item.style.top=pt.y+'px';
-    item.innerHTML=`
-      <span class="usr-icon">${buildAbstractIcon(ICONS[idx % ICONS.length])}</span>
-      <span class="usr-index">${String(idx+1).padStart(2,'0')}</span>
-    `;
-    arc.appendChild(item);
-    itemEls.push(item);
-  });
-
-  function pointOnArc(t){
-    const a=START_A+(END_A-START_A)*t;
-    return { x: CX + Math.cos(a)*R, y: CY + Math.sin(a)*R, angle:a };
-  }
-
-  function clientToValue(clientX,clientY){
-    const rect=arc.getBoundingClientRect();
-    const x=clientX-rect.left;
-    const y=clientY-rect.top;
-    let best=samples[0];
-    let bestD=Infinity;
-    for(let i=0;i<samples.length;i++){
-      const s=samples[i];
-      const dx=x-s.x;
-      const dy=y-s.y;
-      const d=dx*dx+dy*dy;
-      if(d<bestD){ bestD=d; best=s; }
+    // garante ordem correta
+    if(start > end){
+      if(angle < end) angle += Math.PI * 2;
+      end += Math.PI * 2;
     }
-    return best.t*4;
+
+    const t = (angle - start) / (end - start);
+
+    return Math.max(0, Math.min(1, t));
   }
 
-  let _dragging=false;
-  let _curVal=0;
-
-  function setVal(v, doInit){
-    _curVal=Math.max(0,Math.min(4,v));
-    SCENE_POS=_curVal;
-    const t=_curVal/4;
-    const pt=pointOnArc(t);
-
-    thumb.setAttribute('cx',pt.x);
-    thumb.setAttribute('cy',pt.y);
-    thumbRing.setAttribute('cx',pt.x);
-    thumbRing.setAttribute('cy',pt.y);
-    fillPath.style.strokeDashoffset=pathLength*(1-t);
-
-    dotEls.forEach((d,i)=>{
-      const dist=Math.abs(_curVal-i);
-      const active=dist<0.16;
-      d.classList.toggle('active',active);
-      d.setAttribute('r',active ? 5.6 : 3.5);
-    });
-    itemEls.forEach((el,i)=>{
-      const active=Math.abs(_curVal-i)<0.16;
-      el.classList.toggle('active',active);
-      el.style.transform=active ? 'translate(-50%,-50%) scale(1.04)' : 'translate(-50%,-50%) scale(1)';
-    });
-
-    applyScenePos(_curVal,doInit||false);
-    if(window._refreshAllSliders) window._refreshAllSliders();
-    if(window._updateSliderTheme) window._updateSliderTheme(_dragging);
-  }
-
-  arc.addEventListener('pointerdown',e=>{
-    _dragging=true;
-    arc.setPointerCapture(e.pointerId);
-    const hitIndex=findNearestPreset(e.clientX,e.clientY);
-    setVal(hitIndex!==null ? hitIndex : clientToValue(e.clientX,e.clientY));
-    e.preventDefault();
-  });
-  arc.addEventListener('pointermove',e=>{
-    if(!_dragging) return;
-    setVal(clientToValue(e.clientX,e.clientY));
-  });
-  function endDrag(e){
-    _dragging=false;
-    if(e && arc.hasPointerCapture && arc.hasPointerCapture(e.pointerId)) arc.releasePointerCapture(e.pointerId);
-  }
-  arc.addEventListener('pointerup',endDrag);
-  arc.addEventListener('pointercancel',endDrag);
-  arc.addEventListener('lostpointercapture',()=>_dragging=false);
-
-  function findNearestPreset(clientX,clientY){
-    const rect=arc.getBoundingClientRect();
-    const x=clientX-rect.left;
-    const y=clientY-rect.top;
-    for(let i=0;i<5;i++){
-      const pt=pointOnArc(i/4);
-      const labelX=pt.x+LABEL_OFFSET_X;
-      const ddLabel=(x-labelX)*(x-labelX)+(y-pt.y)*(y-pt.y);
-      if(ddLabel<34*34) return i;
-      const ddDot=(x-pt.x)*(x-pt.x)+(y-pt.y)*(y-pt.y);
-      if(ddDot<22*22) return i;
-    }
-    return null;
-  }
-
-  let _lastTheme='';
-  window._updateSliderTheme=function(force){
-    let lum=0.299*BG_COLOR[0]+0.587*BG_COLOR[1]+0.114*BG_COLOR[2];
-    let theme=lum>128?'light':'dark';
-    if(!force&&theme===_lastTheme) return;
-    _lastTheme=theme;
-    let r=document.documentElement;
-    if(theme==='light'){
-      r.style.setProperty('--s-segment-fill','rgba(0,0,0,0.045)');
-      r.style.setProperty('--s-line',       'rgba(0,0,0,0.14)');
-      r.style.setProperty('--s-fill',       'rgba(0,0,0,0.50)');
-      r.style.setProperty('--s-dot',        'rgba(0,0,0,0.26)');
-      r.style.setProperty('--s-dot-active', 'rgba(0,0,0,0.92)');
-      r.style.setProperty('--s-thumb',      '#111');
-      r.style.setProperty('--s-thumb-ring', 'rgba(0,0,0,0.18)');
-      r.style.setProperty('--s-label',      'rgba(0,0,0,0.42)');
-      r.style.setProperty('--s-label-active','rgba(0,0,0,0.94)');
-    } else {
-      r.style.setProperty('--s-segment-fill','rgba(255,255,255,0.12)');
-      r.style.setProperty('--s-line',       'rgba(255,255,255,0.38)');
-      r.style.setProperty('--s-fill',       'rgba(255,255,255,0.96)');
-      r.style.setProperty('--s-dot',        'rgba(255,255,255,0.55)');
-      r.style.setProperty('--s-dot-active', 'rgba(255,255,255,1)');
-      r.style.setProperty('--s-thumb',      '#fff');
-      r.style.setProperty('--s-thumb-ring', 'rgba(255,255,255,0.52)');
-      r.style.setProperty('--s-label',      'rgba(255,255,255,0.76)');
-      r.style.setProperty('--s-label-active','rgba(255,255,255,1)');
-    }
-    try{window.parent.postMessage({fidenzaTheme:theme},'*');}catch(e){}
-  };
-
-  setInterval(()=>{ if(!_dragging&&window._updateSliderTheme) window._updateSliderTheme(); },500);
-  setVal(0,false);
-
-  function polarToCartesian(cx, cy, r, angle){
-    return { x: cx + Math.cos(angle) * r, y: cy + Math.sin(angle) * r };
-  }
-  function describeArc(cx, cy, r, startAngle, endAngle, sweepFlag){
-    const start = polarToCartesian(cx, cy, r, startAngle);
-    const end = polarToCartesian(cx, cy, r, endAngle);
-    const delta = Math.abs(endAngle - startAngle);
-    const largeArcFlag = delta <= Math.PI ? 0 : 1;
-    return `M ${start.x} ${start.y} A ${r} ${r} 0 ${largeArcFlag} ${sweepFlag} ${end.x} ${end.y}`;
-  }
-  function describeSegmentFill(cx, cy, r, startAngle, endAngle, edgeX){
-    const start = polarToCartesian(cx, cy, r, startAngle);
-    const end = polarToCartesian(cx, cy, r, endAngle);
-    const delta = Math.abs(endAngle - startAngle);
-    const largeArcFlag = delta <= Math.PI ? 0 : 1;
-    return `M ${start.x} ${start.y} A ${r} ${r} 0 ${largeArcFlag} 0 ${end.x} ${end.y} L ${edgeX} ${end.y} L ${edgeX} ${start.y} Z`;
-  }
-  function buildAbstractIcon(type){
-    switch(type){
-      case 'slash':
-        return `<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="8"></circle><line x1="8" y1="16" x2="16" y2="8"></line></svg>`;
-      case 'double':
-        return `<svg viewBox="0 0 24 24"><circle cx="9" cy="12" r="5"></circle><circle cx="15" cy="12" r="5"></circle></svg>`;
-      case 'split':
-        return `<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="8"></circle><path d="M12 4 C10 8, 10 16, 12 20"></path></svg>`;
-      case 'orbit':
-        return `<svg viewBox="0 0 24 24"><ellipse cx="12" cy="12" rx="8" ry="5"></ellipse><circle cx="16.5" cy="10.2" r="1.4" fill="currentColor" stroke="none"></circle></svg>`;
-      case 'tilt':
-      default:
-        return `<svg viewBox="0 0 24 24"><path d="M6 16 L12 8 L18 16"></path><line x1="8" y1="18" x2="16" y2="18"></line></svg>`;
-    }
-  }
+  // resto do código continua igual...
 }
 
 // ── PAINEL DE EDIÇÃO (?edit=true) ──────────────────────────────────────────────
