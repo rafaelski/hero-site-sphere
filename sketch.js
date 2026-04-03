@@ -375,10 +375,17 @@ const SCENE_DEFAULTS_MOBILE = [
 ];
 
 function getSceneDefaults(){
-  return window.matchMedia('(max-width: 768px)').matches
+  const ua = navigator.userAgent || navigator.vendor || window.opera;
+  const isTouch = window.matchMedia('(pointer: coarse)').matches;
+  const isNarrow = window.innerWidth <= 768;
+  const isPhoneUA = /iPhone|Android.+Mobile|Mobile/i.test(ua);
+
+  return (isNarrow || (isTouch && isPhoneUA))
     ? SCENE_DEFAULTS_MOBILE
     : SCENE_DEFAULTS_DESKTOP;
 }
+//const IS_MOBILE = window.innerWidth <= 768;
+
 
 // Presets editáveis em runtime (inicializados com os defaults hardcoded)
 let SCENE_PRESETS = getSceneDefaults().map(p=>JSON.parse(JSON.stringify(p)));
@@ -467,9 +474,14 @@ function setup(){
   buildUserSlider();
   if(window._updateSliderTheme) window._updateSliderTheme();
   setTimeout(function(){
-    CANVAS_W=window.innerWidth; CANVAS_H=window.innerHeight;
-    SPHERE_R=calcSphereR(); resizeCanvas(CANVAS_W,CANVAS_H); init();
-  },200);
+    CANVAS_W = window.innerWidth;
+    CANVAS_H = window.innerHeight;
+    SPHERE_R = calcSphereR();
+    resizeCanvas(CANVAS_W, CANVAS_H);
+
+    SCENE_PRESETS = getSceneDefaults().map(p=>JSON.parse(JSON.stringify(p)));
+    applyScenePos(SCENE_POS, true);
+  },300);
   emitTheme();
   new ResizeObserver(function(es){
     for(let e of es){
@@ -509,6 +521,17 @@ function windowResized(){
   // reaplica estado atual
   applyScenePos(SCENE_POS, true);
 }
+
+window.addEventListener('orientationchange', () => {
+  setTimeout(() => {
+    CANVAS_W = document.body.clientWidth || window.innerWidth;
+    CANVAS_H = document.body.clientHeight || window.innerHeight;
+    resizeCanvas(CANVAS_W, CANVAS_H);
+
+    SCENE_PRESETS = getSceneDefaults().map(p=>JSON.parse(JSON.stringify(p)));
+    applyScenePos(SCENE_POS, true);
+  }, 250);
+});
 
 class Particle{
   constructor(){this.x=random(CANVAS_W);this.y=random(CANVAS_H);this.wNorm=random();this.colNorm=random();this.trail=[];this.vel={x:0,y:0};}
