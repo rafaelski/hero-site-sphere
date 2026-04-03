@@ -374,7 +374,8 @@ const SCENE_DEFAULTS_MOBILE = [
   }
 ];
 
-const IS_MOBILE = window.innerWidth <= 768;
+const IS_MOBILE = window.matchMedia('(max-width: 768px)').matches;
+//const IS_MOBILE = window.innerWidth <= 768;
 
 const SCENE_DEFAULTS = IS_MOBILE
   ? SCENE_DEFAULTS_MOBILE
