@@ -459,14 +459,39 @@ function applyScenePos(pos,doInit){
 
 // ── SETUP / DRAW ───────────────────────────────────────────────────────────────
 function emitTheme(){ var lum=0.299*BG_COLOR[0]+0.587*BG_COLOR[1]+0.114*BG_COLOR[2]; try{window.parent.postMessage({fidenzaTheme:lum>128?'light':'dark'},'*');}catch(e){} }
-// Flag que indica se os presets já foram carregados com as dimensões reais do iframe.
-// Enquanto false, o ResizeObserver e o _firstFrame não chamam init() para não
-// sobrescrever o estado correto que o setTimeout vai aplicar.
+
+// Bloqueia ResizeObserver de chamar init() antes das dimensões do iframe estarem prontas.
 let _presetsReady = false;
+
+// Aguarda as dimensões do iframe estabilizarem (2 frames consecutivos iguais)
+// antes de decidir mobile vs desktop. Resolve o problema de iframes em Webflow
+// no mobile onde window.innerWidth pode estar errado por vários frames no load.
+function _waitForStableDimensions(callback){
+  let lastW = 0, lastH = 0, stableFrames = 0;
+  const MIN_STABLE = 3;   // frames consecutivos com mesma dimensão
+  const MAX_WAIT_MS = 1500; // desiste após 1.5s e usa o que tiver
+  const started = Date.now();
+  function check(){
+    const w = window.innerWidth, h = window.innerHeight;
+    if(w > 0 && h > 0 && w === lastW && h === lastH){
+      stableFrames++;
+    } else {
+      stableFrames = 0;
+      lastW = w; lastH = h;
+    }
+    if(stableFrames >= MIN_STABLE || Date.now() - started > MAX_WAIT_MS){
+      callback(lastW, lastH);
+    } else {
+      requestAnimationFrame(check);
+    }
+  }
+  requestAnimationFrame(check);
+}
+
 function setup(){
   CANVAS_W=window.innerWidth; CANVAS_H=window.innerHeight; SPHERE_R=calcSphereR();
-  // Aplica preset 1 por padrão (provisório — dimensões podem estar erradas no mobile)
-  applyState(SCENE_PRESETS[0], false);
+  // Aplica preset provisório para ter algo na tela enquanto aguarda dimensões reais
+  applyState(SCENE_PRESETS[0], true);
   let cnv=createCanvas(CANVAS_W,CANVAS_H);
   cnv.elt.style.cssText='display:block;position:absolute;top:0;left:0;pointer-events:none;';
   document.addEventListener('mousemove',function(e){
@@ -477,20 +502,19 @@ function setup(){
   if(EDIT_MODE) buildEditUI();
   buildUserSlider();
   if(window._updateSliderTheme) window._updateSliderTheme();
-  // Aguarda o iframe mobile estabilizar suas dimensões antes de decidir
-  // qual conjunto de presets usar (mobile vs desktop).
-  setTimeout(function(){
-    CANVAS_W = window.innerWidth;
-    CANVAS_H = window.innerHeight;
-    SPHERE_R = calcSphereR();
+  emitTheme();
+
+  // Espera dimensões estabilizarem, então carrega o conjunto certo de presets
+  _waitForStableDimensions(function(stableW, stableH){
+    CANVAS_W = stableW; CANVAS_H = stableH; SPHERE_R = calcSphereR();
     resizeCanvas(CANVAS_W, CANVAS_H);
     SCENE_PRESETS = getSceneDefaults().map(p=>JSON.parse(JSON.stringify(p)));
     applyScenePos(SCENE_POS, true);
     _presetsReady = true;
-  }, 400);
-  emitTheme();
+  });
+
   new ResizeObserver(function(es){
-    // Ignora eventos anteriores ao timeout — as dimensões ainda podem estar erradas.
+    // Ignora eventos antes das dimensões estarem prontas
     if(!_presetsReady) return;
     for(let e of es){
       let nw=Math.floor(e.contentRect.width),nh=Math.floor(e.contentRect.height);
@@ -500,12 +524,14 @@ function setup(){
     }
   }).observe(document.body);
 }
-let _firstFrame=true;
 function draw(){
-  if(_firstFrame){
-    // Não tenta corrigir dimensões aqui — o setTimeout em setup() cuida disso.
-    _firstFrame=false;
-  }
+  if(BG_FADE){fill(BG_COLOR[0],BG_COLOR[1],BG_COLOR[2],BG_FADE_ALPHA);noStroke();rect(0,0,width,height);}
+  else{background(BG_COLOR[0],BG_COLOR[1],BG_COLOR[2]);}
+  if(attractor.strength>0){attractor.strength=max(0,attractor.strength-ATTRACTOR_DECAY);if(attractor.strength===0)attractor.active=false;}
+  rotY+=ROT_SPEED;
+  buildSpatialGrid();
+  for(let p of particles){p.update();p.draw();}
+}
   if(BG_FADE){fill(BG_COLOR[0],BG_COLOR[1],BG_COLOR[2],BG_FADE_ALPHA);noStroke();rect(0,0,width,height);}
   else{background(BG_COLOR[0],BG_COLOR[1],BG_COLOR[2]);}
   if(attractor.strength>0){attractor.strength=max(0,attractor.strength-ATTRACTOR_DECAY);if(attractor.strength===0)attractor.active=false;}
