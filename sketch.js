@@ -374,7 +374,11 @@ const SCENE_DEFAULTS_MOBILE = [
   }
 ];
 
-const IS_MOBILE = window.matchMedia('(max-width: 768px)').matches;
+function getSceneDefaults(){
+  return window.matchMedia('(max-width: 768px)').matches
+    ? SCENE_DEFAULTS_MOBILE
+    : SCENE_DEFAULTS_DESKTOP;
+}
 //const IS_MOBILE = window.innerWidth <= 768;
 
 const SCENE_DEFAULTS = IS_MOBILE
@@ -382,7 +386,7 @@ const SCENE_DEFAULTS = IS_MOBILE
   : SCENE_DEFAULTS_DESKTOP;
 
 // Presets editáveis em runtime (inicializados com os defaults hardcoded)
-let SCENE_PRESETS = SCENE_DEFAULTS.map(p=>JSON.parse(JSON.stringify(p)));
+let SCENE_PRESETS = getSceneDefaults().map(p=>JSON.parse(JSON.stringify(p)));
 let SCENE_POS = 0;
 
 // ── PRESET FUNCTIONS ───────────────────────────────────────────────────────────
@@ -498,7 +502,18 @@ function draw(){
 function init(){ let s=USE_FIXED_SEED?FIXED_SEED:floor(random(999999)); randomSeed(s);noiseSeed(s);particles=[]; for(let i=0;i<NUM_PARTICLES;i++)particles.push(new Particle()); }
 function buildSpatialGrid(){ spatialGrid.cell=max(1,REPULSION_RADIUS);spatialGrid.cells={}; for(let p of particles){let cx=floor(p.x/spatialGrid.cell),cy=floor(p.y/spatialGrid.cell),k=cx+','+cy;if(!spatialGrid.cells[k])spatialGrid.cells[k]=[];spatialGrid.cells[k].push(p);} }
 function fieldAngle(x,y){return noise(x*FIELD_SCALE,y*FIELD_SCALE,frameCount*FIELD_EVOLUTION)*FIELD_ANGLE;}
-function windowResized(){CANVAS_W=document.body.clientWidth||window.innerWidth;CANVAS_H=document.body.clientHeight||window.innerHeight;resizeCanvas(CANVAS_W,CANVAS_H);}
+
+function windowResized(){
+  CANVAS_W=document.body.clientWidth||window.innerWidth;
+  CANVAS_H=document.body.clientHeight||window.innerHeight;
+  resizeCanvas(CANVAS_W,CANVAS_H);
+
+  // troca presets conforme mobile/desktop
+  SCENE_PRESETS = getSceneDefaults().map(p=>JSON.parse(JSON.stringify(p)));
+
+  // reaplica estado atual
+  applyScenePos(SCENE_POS, true);
+}
 
 class Particle{
   constructor(){this.x=random(CANVAS_W);this.y=random(CANVAS_H);this.wNorm=random();this.colNorm=random();this.trail=[];this.vel={x:0,y:0};}
