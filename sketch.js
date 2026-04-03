@@ -31,7 +31,7 @@ function toSphere(x,y){
 const SCENE_DEFAULTS_DESKTOP = [
   {
     "FIELD_SCALE": 0.0018,
-    "FIELD_ANGLE": 5.16,
+    "FIELD_ANGLE": 5.17,
     "FIELD_EVOLUTION": 0.0005,
     "REPULSION_RADIUS": 65,
     "REPULSION_STRENGTH": 1.65,
@@ -201,194 +201,74 @@ const SCENE_DEFAULTS_DESKTOP = [
   }
 ];
 
+// Versão mobile: mesmos presets mas com menos partículas e velocidade menor
+// para não travar o celular. Edite conforme quiser.
 const SCENE_DEFAULTS_MOBILE = [
   {
-    "FIELD_SCALE": 0.0018,
-    "FIELD_ANGLE": 5.17,
-    "FIELD_EVOLUTION": 0.0005,
-    "REPULSION_RADIUS": 65,
-    "REPULSION_STRENGTH": 1.65,
-    "NUM_PARTICLES": 700,
-    "TRAIL_LENGTH": 10,
-    "MIN_WIDTH": 1.5,
-    "MAX_WIDTH": 2,
-    "SPEED": 0.2,
-    "WRAP_EDGES": true,
-    "ATTRACTOR_RADIUS": 430,
-    "ATTRACTOR_STRENGTH": 16,
-    "ATTRACTOR_DECAY": 0.008,
-    "ORBIT_DISTANCE": 300,
-    "FADE_TAIL": false,
-    "BG_FADE": true,
-    "BG_FADE_ALPHA": 60,
-    "SAT_MULT": 1,
-    "LIGHT_MULT": 1,
-    "BG_COLOR": [15,14,23],
-    "PALETTE": [
-      [20,80,140,0.3],
-      [40,140,180,0.25],
-      [80,200,200,0.2],
-      [20,40,80,0.15],
-      [160,220,230,0.1]
-    ],
-    "SPHERE_R_PCT": 0.38,
-    "SPHERE_R_MIN": 120,
-    "SPHERE_R_MAX": 500,
-    "ROT_SPEED": 0
+    "FIELD_SCALE": 0.0018, "FIELD_ANGLE": 5.17, "FIELD_EVOLUTION": 0.0005,
+    "REPULSION_RADIUS": 65, "REPULSION_STRENGTH": 1.65,
+    "NUM_PARTICLES": 500, "TRAIL_LENGTH": 10, "MIN_WIDTH": 1.5, "MAX_WIDTH": 2,
+    "SPEED": 0.8, "WRAP_EDGES": true,
+    "ATTRACTOR_RADIUS": 430, "ATTRACTOR_STRENGTH": 16, "ATTRACTOR_DECAY": 0.008, "ORBIT_DISTANCE": 300,
+    "FADE_TAIL": false, "BG_FADE": true, "BG_FADE_ALPHA": 60,
+    "SAT_MULT": 1, "LIGHT_MULT": 1, "BG_COLOR": [15,14,23],
+    "PALETTE": [[20,80,140,0.3],[40,140,180,0.25],[80,200,200,0.2],[20,40,80,0.15],[160,220,230,0.1]],
+    "SPHERE_R_PCT": 0.42, "SPHERE_R_MIN": 120, "SPHERE_R_MAX": 500, "ROT_SPEED": 0
   },
   {
-    "FIELD_SCALE": 0.0003385866799261537,
-    "FIELD_ANGLE": 8.962326101978022,
-    "FIELD_EVOLUTION": 0.0016930841826039563,
-    "REPULSION_RADIUS": 70.9477978021978,
-    "REPULSION_STRENGTH": 1.246243325186813,
-    "NUM_PARTICLES": 237,
-    "TRAIL_LENGTH": 5,
-    "MIN_WIDTH": 1.8529670329670322,
-    "MAX_WIDTH": 5.7076483516483485,
-    "SPEED": 0.2,
-    "WRAP_EDGES": true,
-    "ATTRACTOR_RADIUS": 420.5320128791209,
-    "ATTRACTOR_STRENGTH": 13.074269919999999,
-    "ATTRACTOR_DECAY": 0.011599823120175823,
-    "ORBIT_DISTANCE": 46.395017952351644,
-    "FADE_TAIL": false,
-    "BG_FADE": true,
-    "BG_FADE_ALPHA": 40.91067710417583,
-    "SAT_MULT": 0.9986414153846154,
-    "LIGHT_MULT": 1.0009704175824177,
-    "BG_COLOR": [15,14,23],
-    "PALETTE": [
-      [68,68,68,0.18160734474164691],
-      [67,74,80,0.21019346395471195],
-      [117,142,142,0.20369410451547496],
-      [166,195,201,0.18102243288826908],
-      [200,230,239,0.22348265389989713]
-    ],
-    "SPHERE_R_PCT": 0.54,
-    "SPHERE_R_MIN": 108.08460616791209,
-    "SPHERE_R_MAX": 432.402542596923,
-    "ROT_SPEED": 0.0021781118382065935
+    "FIELD_SCALE": 0.0003385866799261537, "FIELD_ANGLE": 8.962326101978022, "FIELD_EVOLUTION": 0.0016930841826039563,
+    "REPULSION_RADIUS": 70.9477978021978, "REPULSION_STRENGTH": 1.246243325186813,
+    "NUM_PARTICLES": 300, "TRAIL_LENGTH": 5, "MIN_WIDTH": 1.8529670329670322, "MAX_WIDTH": 5.7076483516483485,
+    "SPEED": 0.8, "WRAP_EDGES": true,
+    "ATTRACTOR_RADIUS": 420.5320128791209, "ATTRACTOR_STRENGTH": 13.074269919999999, "ATTRACTOR_DECAY": 0.011599823120175823, "ORBIT_DISTANCE": 46.395017952351644,
+    "FADE_TAIL": false, "BG_FADE": true, "BG_FADE_ALPHA": 40.91067710417583,
+    "SAT_MULT": 0.9986414153846154, "LIGHT_MULT": 1.0009704175824177, "BG_COLOR": [15,14,23],
+    "PALETTE": [[68,68,68,0.18],[67,74,80,0.21],[117,142,142,0.20],[166,195,201,0.18],[200,230,239,0.22]],
+    "SPHERE_R_PCT": 0.48, "SPHERE_R_MIN": 108, "SPHERE_R_MAX": 432, "ROT_SPEED": 0.0021781118382065935
   },
   {
-    "FIELD_SCALE": 0.0017974006346308164,
-    "FIELD_ANGLE": 5.671879031275745,
-    "FIELD_EVOLUTION": 0.0003764197601861311,
-    "REPULSION_RADIUS": 51.89936730979297,
-    "REPULSION_STRENGTH": 1.2843383068280863,
-    "NUM_PARTICLES": 4,
-    "TRAIL_LENGTH": 8,
-    "MIN_WIDTH": 9.352536932874541,
-    "MAX_WIDTH": 27.982292317770405,
-    "SPEED": 1.6912087912087914,
-    "WRAP_EDGES": true,
-    "ATTRACTOR_RADIUS": 359.93568594981303,
-    "ATTRACTOR_STRENGTH": 13.52762744458418,
-    "ATTRACTOR_DECAY": 0.017108383991137024,
-    "ORBIT_DISTANCE": 68.01872551481429,
-    "FADE_TAIL": false,
-    "BG_FADE": false,
-    "BG_FADE_ALPHA": 18.51802057774738,
-    "SAT_MULT": 0.8801318990017183,
-    "LIGHT_MULT": 1.0856200721416298,
-    "BG_COLOR": [22,21,29],
-    "PALETTE": [
-      [241,237,235,0.09592813402193054],
-      [29,64,94,0.3584034086957984],
-      [27,145,137,0.3073281878996397],
-      [19,152,178,0.09350395338431834],
-      [45,182,228,0.144836315998313]
-    ],
-    "SPHERE_R_PCT": 0.3,
-    "SPHERE_R_MIN": 143.83812895036138,
-    "SPHERE_R_MAX": 581.5746725474526,
-    "ROT_SPEED": 0.0008515676779094782
+    "FIELD_SCALE": 0.0017974006346308164, "FIELD_ANGLE": 5.671879031275745, "FIELD_EVOLUTION": 0.0003764197601861311,
+    "REPULSION_RADIUS": 51.89936730979297, "REPULSION_STRENGTH": 1.2843383068280863,
+    "NUM_PARTICLES": 120, "TRAIL_LENGTH": 8, "MIN_WIDTH": 9.352536932874541, "MAX_WIDTH": 27.982292317770405,
+    "SPEED": 1.6, "WRAP_EDGES": true,
+    "ATTRACTOR_RADIUS": 359.93568594981303, "ATTRACTOR_STRENGTH": 13.52762744458418, "ATTRACTOR_DECAY": 0.017108383991137024, "ORBIT_DISTANCE": 68.01872551481429,
+    "FADE_TAIL": false, "BG_FADE": false, "BG_FADE_ALPHA": 18.51802057774738,
+    "SAT_MULT": 0.8801318990017183, "LIGHT_MULT": 1.0856200721416298, "BG_COLOR": [22,21,29],
+    "PALETTE": [[241,237,235,0.096],[29,64,94,0.358],[27,145,137,0.307],[19,152,178,0.094],[45,182,228,0.145]],
+    "SPHERE_R_PCT": 0.34, "SPHERE_R_MIN": 143, "SPHERE_R_MAX": 500, "ROT_SPEED": 0.0008515676779094782
   },
   {
-    "FIELD_SCALE": 0.004500635032371199,
-    "FIELD_ANGLE": 8.4728804512,
-    "FIELD_EVOLUTION": 0.0015,
-    "REPULSION_RADIUS": 44.774784000000004,
-    "REPULSION_STRENGTH": 2.33263571968,
-    "NUM_PARTICLES": 35,
-    "TRAIL_LENGTH": 8,
-    "MIN_WIDTH": 6.5299136,
-    "MAX_WIDTH": 16.09001088,
-    "SPEED": 3.5,
-    "WRAP_EDGES": true,
-    "ATTRACTOR_RADIUS": 309.28878288,
-    "ATTRACTOR_STRENGTH": 8.866953068800001,
-    "ATTRACTOR_DECAY": 0.009436665085440001,
-    "ORBIT_DISTANCE": 35.99436121856,
-    "FADE_TAIL": false,
-    "BG_FADE": false,
-    "BG_FADE_ALPHA": 9.6100556992,
-    "SAT_MULT": 0.987797152,
-    "LIGHT_MULT": 1.00871632,
-    "BG_COLOR": [222,218,208],
-    "PALETTE": [
-      [213,96,69,0.26136644480000004],
-      [57,105,180,0.2880590054691152],
-      [201,180,58,0.17495236272],
-      [172,187,189,0.15320672116426814],
-      [40,54,59,0.12241546584661667]
-    ],
-    "SPHERE_R_PCT": 0.38,
-    "SPHERE_R_MIN": 132.2293078912,
-    "SPHERE_R_MAX": 555.2017184128,
-    "ROT_SPEED": 0
+    "FIELD_SCALE": 0.004500635032371199, "FIELD_ANGLE": 8.4728804512, "FIELD_EVOLUTION": 0.0015,
+    "REPULSION_RADIUS": 44.774784, "REPULSION_STRENGTH": 2.33263571968,
+    "NUM_PARTICLES": 180, "TRAIL_LENGTH": 8, "MIN_WIDTH": 6.5299136, "MAX_WIDTH": 16.09001088,
+    "SPEED": 3.0, "WRAP_EDGES": true,
+    "ATTRACTOR_RADIUS": 309.28878288, "ATTRACTOR_STRENGTH": 8.866953068800001, "ATTRACTOR_DECAY": 0.009436665085440001, "ORBIT_DISTANCE": 35.99436121856,
+    "FADE_TAIL": false, "BG_FADE": false, "BG_FADE_ALPHA": 9.6100556992,
+    "SAT_MULT": 0.987797152, "LIGHT_MULT": 1.00871632, "BG_COLOR": [222,218,208],
+    "PALETTE": [[213,96,69,0.261],[57,105,180,0.288],[201,180,58,0.175],[172,187,189,0.153],[40,54,59,0.122]],
+    "SPHERE_R_PCT": 0.38, "SPHERE_R_MIN": 132, "SPHERE_R_MAX": 500, "ROT_SPEED": 0
   },
   {
-    "FIELD_SCALE": 0.0053,
-    "FIELD_ANGLE": 6.75,
-    "FIELD_EVOLUTION": 0.0054,
-    "REPULSION_RADIUS": 54,
-    "REPULSION_STRENGTH": 2.45,
-    "NUM_PARTICLES": 700,
-    "TRAIL_LENGTH": 5,
-    "MIN_WIDTH": 2,
-    "MAX_WIDTH": 3.5,
-    "SPEED": 0.25,
-    "WRAP_EDGES": true,
-    "ATTRACTOR_RADIUS": 465,
-    "ATTRACTOR_STRENGTH": 14.3,
-    "ATTRACTOR_DECAY": 0.012,
-    "ORBIT_DISTANCE": 55,
-    "FADE_TAIL": false,
-    "BG_FADE": true,
-    "BG_FADE_ALPHA": 20,
-    "SAT_MULT": 1,
-    "LIGHT_MULT": 1,
-    "BG_COLOR": [245,240,228],
-    "PALETTE": [
-      [255,50,50,0.25],
-      [50,200,100,0.25],
-      [50,100,255,0.2],
-      [255,200,0,0.2],
-      [200,0,200,0.1]
-    ],
-    "SPHERE_R_PCT": 0.38,
-    "SPHERE_R_MIN": 110,
-    "SPHERE_R_MAX": 450,
-    "ROT_SPEED": 0
+    "FIELD_SCALE": 0.0053, "FIELD_ANGLE": 6.75, "FIELD_EVOLUTION": 0.0054,
+    "REPULSION_RADIUS": 54, "REPULSION_STRENGTH": 2.45,
+    "NUM_PARTICLES": 500, "TRAIL_LENGTH": 5, "MIN_WIDTH": 2, "MAX_WIDTH": 3.5,
+    "SPEED": 0.6, "WRAP_EDGES": true,
+    "ATTRACTOR_RADIUS": 465, "ATTRACTOR_STRENGTH": 14.3, "ATTRACTOR_DECAY": 0.012, "ORBIT_DISTANCE": 55,
+    "FADE_TAIL": false, "BG_FADE": true, "BG_FADE_ALPHA": 20,
+    "SAT_MULT": 1, "LIGHT_MULT": 1, "BG_COLOR": [245,240,228],
+    "PALETTE": [[255,50,50,0.25],[50,200,100,0.25],[50,100,255,0.2],[255,200,0,0.2],[200,0,200,0.1]],
+    "SPHERE_R_PCT": 0.42, "SPHERE_R_MIN": 110, "SPHERE_R_MAX": 450, "ROT_SPEED": 0
   }
 ];
 
-function getSceneDefaults(){
-  const ua = navigator.userAgent || navigator.vendor || window.opera;
-  const isTouch = window.matchMedia('(pointer: coarse)').matches;
-  const isNarrow = window.innerWidth <= 768;
-  const isPhoneUA = /iPhone|Android.+Mobile|Mobile/i.test(ua);
-
-  return (isNarrow || (isTouch && isPhoneUA))
-    ? SCENE_DEFAULTS_MOBILE
-    : SCENE_DEFAULTS_DESKTOP;
+// Detecta se é mobile: pointer grosso (touch) OU largura estreita
+function isMobileDevice(){
+  return window.matchMedia('(pointer: coarse)').matches || window.innerWidth <= 768;
 }
-//const IS_MOBILE = window.innerWidth <= 768;
 
-
-// Presets editáveis em runtime — populados em setup() após dimensões estabilizarem
-let SCENE_PRESETS = SCENE_DEFAULTS_DESKTOP.map(p=>JSON.parse(JSON.stringify(p))); // placeholder
+// Presets editáveis em runtime — inicializados com desktop como placeholder seguro.
+// O setup() vai trocar pelo conjunto correto após as dimensões do iframe estabilizarem.
+let SCENE_PRESETS = SCENE_DEFAULTS_DESKTOP.map(p=>JSON.parse(JSON.stringify(p)));
 let SCENE_POS = 0;
 
 // ── PRESET FUNCTIONS ───────────────────────────────────────────────────────────
@@ -459,7 +339,15 @@ function applyScenePos(pos,doInit){
 
 // ── SETUP / DRAW ───────────────────────────────────────────────────────────────
 function emitTheme(){ var lum=0.299*BG_COLOR[0]+0.587*BG_COLOR[1]+0.114*BG_COLOR[2]; try{window.parent.postMessage({fidenzaTheme:lum>128?'light':'dark'},'*');}catch(e){} }
-let _presetsReady = false;
+
+// Carrega o conjunto de presets correto (mobile ou desktop) e reinicia a simulação.
+function applyCorrectPresets(){
+  SCENE_PRESETS = (isMobileDevice() ? SCENE_DEFAULTS_MOBILE : SCENE_DEFAULTS_DESKTOP)
+    .map(p=>JSON.parse(JSON.stringify(p)));
+  applyScenePos(SCENE_POS, true);
+  if(window._refreshAllSliders) window._refreshAllSliders();
+}
+
 function setup(){
   CANVAS_W=window.innerWidth; CANVAS_H=window.innerHeight; SPHERE_R=calcSphereR();
   applyState(SCENE_PRESETS[0], true);
@@ -474,36 +362,44 @@ function setup(){
   buildUserSlider();
   if(window._updateSliderTheme) window._updateSliderTheme();
   emitTheme();
-  // Espera dimensões do iframe estabilizarem (3 frames consecutivos iguais, máx 1.5s)
-  // antes de decidir mobile vs desktop e aplicar os presets corretos.
-  (function waitStable(lastW, lastH, count, t0){
-    requestAnimationFrame(function(){
-      var w=window.innerWidth, h=window.innerHeight;
-      if(w===lastW && h===lastH){ count++; } else { count=0; }
-      if(count>=3 || Date.now()-t0>1500){
-        CANVAS_W=w; CANVAS_H=h; SPHERE_R=calcSphereR();
-        resizeCanvas(CANVAS_W,CANVAS_H);
-        SCENE_PRESETS=getSceneDefaults().map(p=>JSON.parse(JSON.stringify(p)));
-        applyScenePos(SCENE_POS,true);
-        _presetsReady=true;
-      } else {
-        waitStable(w,h,count,t0);
-      }
-    });
-  })(0,0,0,Date.now());
-  new ResizeObserver(function(es){
-    if(!_presetsReady) return;
+
+  // Usa ResizeObserver no CANVAS para detectar quando as dimensões do iframe
+  // pararam de mudar. Esse evento é muito mais confiável que setTimeout no mobile,
+  // porque dispara exatamente quando o layout termina — não antes, não muito depois.
+  let _settled = false;
+  let _settleTimer = null;
+  let _ro = new ResizeObserver(function(es){
     for(let e of es){
-      let nw=Math.floor(e.contentRect.width),nh=Math.floor(e.contentRect.height);
-      if(nw>0&&nh>0&&(nw!==CANVAS_W||nh!==CANVAS_H)){
-        CANVAS_W=nw;CANVAS_H=nh;SPHERE_R=calcSphereR();resizeCanvas(CANVAS_W,CANVAS_H);init();
+      let nw=Math.floor(e.contentRect.width), nh=Math.floor(e.contentRect.height);
+      if(nw<=0||nh<=0) continue;
+      CANVAS_W=nw; CANVAS_H=nh; SPHERE_R=calcSphereR(); resizeCanvas(CANVAS_W,CANVAS_H);
+      if(!_settled){
+        // Debounce: espera 120ms sem novos eventos antes de considerar "estável"
+        clearTimeout(_settleTimer);
+        _settleTimer = setTimeout(function(){
+          _settled = true;
+          applyCorrectPresets();
+          // Após estabilizar, troca o observer por um simples que só lida com resize
+          _ro.disconnect();
+          new ResizeObserver(function(es2){
+            for(let e2 of es2){
+              let nw2=Math.floor(e2.contentRect.width),nh2=Math.floor(e2.contentRect.height);
+              if(nw2>0&&nh2>0&&(nw2!==CANVAS_W||nh2!==CANVAS_H)){
+                CANVAS_W=nw2;CANVAS_H=nh2;SPHERE_R=calcSphereR();resizeCanvas(CANVAS_W,CANVAS_H);
+                applyCorrectPresets();
+              }
+            }
+          }).observe(document.body);
+        }, 120);
+      } else {
+        // Já estabilizado — é um resize real (rotação, redimensionar janela)
+        applyCorrectPresets();
       }
     }
-  }).observe(document.body);
+  });
+  _ro.observe(cnv.elt);
 }
-let _firstFrame=true;
 function draw(){
-  if(_firstFrame){ _firstFrame=false; }
   if(BG_FADE){fill(BG_COLOR[0],BG_COLOR[1],BG_COLOR[2],BG_FADE_ALPHA);noStroke();rect(0,0,width,height);}
   else{background(BG_COLOR[0],BG_COLOR[1],BG_COLOR[2]);}
   if(attractor.strength>0){attractor.strength=max(0,attractor.strength-ATTRACTOR_DECAY);if(attractor.strength===0)attractor.active=false;}
@@ -514,29 +410,12 @@ function draw(){
 function init(){ let s=USE_FIXED_SEED?FIXED_SEED:floor(random(999999)); randomSeed(s);noiseSeed(s);particles=[]; for(let i=0;i<NUM_PARTICLES;i++)particles.push(new Particle()); }
 function buildSpatialGrid(){ spatialGrid.cell=max(1,REPULSION_RADIUS);spatialGrid.cells={}; for(let p of particles){let cx=floor(p.x/spatialGrid.cell),cy=floor(p.y/spatialGrid.cell),k=cx+','+cy;if(!spatialGrid.cells[k])spatialGrid.cells[k]=[];spatialGrid.cells[k].push(p);} }
 function fieldAngle(x,y){return noise(x*FIELD_SCALE,y*FIELD_SCALE,frameCount*FIELD_EVOLUTION)*FIELD_ANGLE;}
-
 function windowResized(){
   CANVAS_W=document.body.clientWidth||window.innerWidth;
   CANVAS_H=document.body.clientHeight||window.innerHeight;
   resizeCanvas(CANVAS_W,CANVAS_H);
-
-  // troca presets conforme mobile/desktop
-  SCENE_PRESETS = getSceneDefaults().map(p=>JSON.parse(JSON.stringify(p)));
-
-  // reaplica estado atual
-  applyScenePos(SCENE_POS, true);
+  applyCorrectPresets();
 }
-
-window.addEventListener('orientationchange', () => {
-  setTimeout(() => {
-    CANVAS_W = document.body.clientWidth || window.innerWidth;
-    CANVAS_H = document.body.clientHeight || window.innerHeight;
-    resizeCanvas(CANVAS_W, CANVAS_H);
-
-    SCENE_PRESETS = getSceneDefaults().map(p=>JSON.parse(JSON.stringify(p)));
-    applyScenePos(SCENE_POS, true);
-  }, 250);
-});
 
 class Particle{
   constructor(){this.x=random(CANVAS_W);this.y=random(CANVAS_H);this.wNorm=random();this.colNorm=random();this.trail=[];this.vel={x:0,y:0};}
