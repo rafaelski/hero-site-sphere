@@ -31,7 +31,7 @@ function toSphere(x,y){
 const SCENE_DEFAULTS_DESKTOP = [
   {
     "FIELD_SCALE": 0.0018,
-    "FIELD_ANGLE": 5.17,
+    "FIELD_ANGLE": 5.16,
     "FIELD_EVOLUTION": 0.0005,
     "REPULSION_RADIUS": 65,
     "REPULSION_STRENGTH": 1.65,
