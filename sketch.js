@@ -459,9 +459,13 @@ function applyScenePos(pos,doInit){
 
 // ── SETUP / DRAW ───────────────────────────────────────────────────────────────
 function emitTheme(){ var lum=0.299*BG_COLOR[0]+0.587*BG_COLOR[1]+0.114*BG_COLOR[2]; try{window.parent.postMessage({fidenzaTheme:lum>128?'light':'dark'},'*');}catch(e){} }
+// Flag que indica se os presets já foram carregados com as dimensões reais do iframe.
+// Enquanto false, o ResizeObserver e o _firstFrame não chamam init() para não
+// sobrescrever o estado correto que o setTimeout vai aplicar.
+let _presetsReady = false;
 function setup(){
   CANVAS_W=window.innerWidth; CANVAS_H=window.innerHeight; SPHERE_R=calcSphereR();
-  // Aplica preset 1 por padrão
+  // Aplica preset 1 por padrão (provisório — dimensões podem estar erradas no mobile)
   applyState(SCENE_PRESETS[0], false);
   let cnv=createCanvas(CANVAS_W,CANVAS_H);
   cnv.elt.style.cssText='display:block;position:absolute;top:0;left:0;pointer-events:none;';
@@ -473,17 +477,21 @@ function setup(){
   if(EDIT_MODE) buildEditUI();
   buildUserSlider();
   if(window._updateSliderTheme) window._updateSliderTheme();
+  // Aguarda o iframe mobile estabilizar suas dimensões antes de decidir
+  // qual conjunto de presets usar (mobile vs desktop).
   setTimeout(function(){
     CANVAS_W = window.innerWidth;
     CANVAS_H = window.innerHeight;
     SPHERE_R = calcSphereR();
     resizeCanvas(CANVAS_W, CANVAS_H);
-
     SCENE_PRESETS = getSceneDefaults().map(p=>JSON.parse(JSON.stringify(p)));
     applyScenePos(SCENE_POS, true);
-  },300);
+    _presetsReady = true;
+  }, 400);
   emitTheme();
   new ResizeObserver(function(es){
+    // Ignora eventos anteriores ao timeout — as dimensões ainda podem estar erradas.
+    if(!_presetsReady) return;
     for(let e of es){
       let nw=Math.floor(e.contentRect.width),nh=Math.floor(e.contentRect.height);
       if(nw>0&&nh>0&&(nw!==CANVAS_W||nh!==CANVAS_H)){
@@ -495,8 +503,7 @@ function setup(){
 let _firstFrame=true;
 function draw(){
   if(_firstFrame){
-    let nw=Math.floor(window.innerWidth),nh=Math.floor(window.innerHeight);
-    if(nw>0&&nh>0&&(nw!==CANVAS_W||nh!==CANVAS_H)){CANVAS_W=nw;CANVAS_H=nh;SPHERE_R=calcSphereR();resizeCanvas(CANVAS_W,CANVAS_H);init();}
+    // Não tenta corrigir dimensões aqui — o setTimeout em setup() cuida disso.
     _firstFrame=false;
   }
   if(BG_FADE){fill(BG_COLOR[0],BG_COLOR[1],BG_COLOR[2],BG_FADE_ALPHA);noStroke();rect(0,0,width,height);}
