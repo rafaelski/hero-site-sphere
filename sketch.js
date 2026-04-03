@@ -532,13 +532,6 @@ function draw(){
   buildSpatialGrid();
   for(let p of particles){p.update();p.draw();}
 }
-  if(BG_FADE){fill(BG_COLOR[0],BG_COLOR[1],BG_COLOR[2],BG_FADE_ALPHA);noStroke();rect(0,0,width,height);}
-  else{background(BG_COLOR[0],BG_COLOR[1],BG_COLOR[2]);}
-  if(attractor.strength>0){attractor.strength=max(0,attractor.strength-ATTRACTOR_DECAY);if(attractor.strength===0)attractor.active=false;}
-  rotY+=ROT_SPEED;
-  buildSpatialGrid();
-  for(let p of particles){p.update();p.draw();}
-}
 function init(){ let s=USE_FIXED_SEED?FIXED_SEED:floor(random(999999)); randomSeed(s);noiseSeed(s);particles=[]; for(let i=0;i<NUM_PARTICLES;i++)particles.push(new Particle()); }
 function buildSpatialGrid(){ spatialGrid.cell=max(1,REPULSION_RADIUS);spatialGrid.cells={}; for(let p of particles){let cx=floor(p.x/spatialGrid.cell),cy=floor(p.y/spatialGrid.cell),k=cx+','+cy;if(!spatialGrid.cells[k])spatialGrid.cells[k]=[];spatialGrid.cells[k].push(p);} }
 function fieldAngle(x,y){return noise(x*FIELD_SCALE,y*FIELD_SCALE,frameCount*FIELD_EVOLUTION)*FIELD_ANGLE;}
