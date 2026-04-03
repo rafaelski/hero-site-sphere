@@ -201,8 +201,6 @@ const SCENE_DEFAULTS_DESKTOP = [
   }
 ];
 
-// Versão mobile: mesmos presets mas com menos partículas e velocidade menor
-// para não travar o celular. Edite conforme quiser.
 const SCENE_DEFAULTS_MOBILE = [
   {
     "FIELD_SCALE": 0.0018, "FIELD_ANGLE": 5.17, "FIELD_EVOLUTION": 0.0005,
@@ -261,14 +259,16 @@ const SCENE_DEFAULTS_MOBILE = [
   }
 ];
 
-// Detecta se é mobile: pointer grosso (touch) OU largura estreita
+// pointer:coarse = tela touch. Funciona imediatamente, sem depender de dimensões.
 function isMobileDevice(){
   return window.matchMedia('(pointer: coarse)').matches || window.innerWidth <= 768;
 }
 
-// Presets editáveis em runtime — inicializados com desktop como placeholder seguro.
-// O setup() vai trocar pelo conjunto correto após as dimensões do iframe estabilizarem.
-let SCENE_PRESETS = SCENE_DEFAULTS_DESKTOP.map(p=>JSON.parse(JSON.stringify(p)));
+function getPresetDefaults(){
+  return isMobileDevice() ? SCENE_DEFAULTS_MOBILE : SCENE_DEFAULTS_DESKTOP;
+}
+
+let SCENE_PRESETS = getPresetDefaults().map(p=>JSON.parse(JSON.stringify(p)));
 let SCENE_POS = 0;
 
 // ── PRESET FUNCTIONS ───────────────────────────────────────────────────────────
@@ -339,17 +339,10 @@ function applyScenePos(pos,doInit){
 
 // ── SETUP / DRAW ───────────────────────────────────────────────────────────────
 function emitTheme(){ var lum=0.299*BG_COLOR[0]+0.587*BG_COLOR[1]+0.114*BG_COLOR[2]; try{window.parent.postMessage({fidenzaTheme:lum>128?'light':'dark'},'*');}catch(e){} }
-
-// Carrega o conjunto de presets correto (mobile ou desktop) e reinicia a simulação.
-function applyCorrectPresets(){
-  SCENE_PRESETS = (isMobileDevice() ? SCENE_DEFAULTS_MOBILE : SCENE_DEFAULTS_DESKTOP)
-    .map(p=>JSON.parse(JSON.stringify(p)));
-  applyScenePos(SCENE_POS, true);
-  if(window._refreshAllSliders) window._refreshAllSliders();
-}
-
 function setup(){
   CANVAS_W=window.innerWidth; CANVAS_H=window.innerHeight; SPHERE_R=calcSphereR();
+  // Carrega presets corretos imediatamente — pointer:coarse não depende de dimensões
+  SCENE_PRESETS = getPresetDefaults().map(p=>JSON.parse(JSON.stringify(p)));
   applyState(SCENE_PRESETS[0], true);
   let cnv=createCanvas(CANVAS_W,CANVAS_H);
   cnv.elt.style.cssText='display:block;position:absolute;top:0;left:0;pointer-events:none;';
@@ -362,44 +355,26 @@ function setup(){
   buildUserSlider();
   if(window._updateSliderTheme) window._updateSliderTheme();
   emitTheme();
-
-  // Usa ResizeObserver no CANVAS para detectar quando as dimensões do iframe
-  // pararam de mudar. Esse evento é muito mais confiável que setTimeout no mobile,
-  // porque dispara exatamente quando o layout termina — não antes, não muito depois.
-  let _settled = false;
-  let _settleTimer = null;
-  let _ro = new ResizeObserver(function(es){
+  new ResizeObserver(function(es){
     for(let e of es){
-      let nw=Math.floor(e.contentRect.width), nh=Math.floor(e.contentRect.height);
-      if(nw<=0||nh<=0) continue;
-      CANVAS_W=nw; CANVAS_H=nh; SPHERE_R=calcSphereR(); resizeCanvas(CANVAS_W,CANVAS_H);
-      if(!_settled){
-        // Debounce: espera 120ms sem novos eventos antes de considerar "estável"
-        clearTimeout(_settleTimer);
-        _settleTimer = setTimeout(function(){
-          _settled = true;
-          applyCorrectPresets();
-          // Após estabilizar, troca o observer por um simples que só lida com resize
-          _ro.disconnect();
-          new ResizeObserver(function(es2){
-            for(let e2 of es2){
-              let nw2=Math.floor(e2.contentRect.width),nh2=Math.floor(e2.contentRect.height);
-              if(nw2>0&&nh2>0&&(nw2!==CANVAS_W||nh2!==CANVAS_H)){
-                CANVAS_W=nw2;CANVAS_H=nh2;SPHERE_R=calcSphereR();resizeCanvas(CANVAS_W,CANVAS_H);
-                applyCorrectPresets();
-              }
-            }
-          }).observe(document.body);
-        }, 120);
-      } else {
-        // Já estabilizado — é um resize real (rotação, redimensionar janela)
-        applyCorrectPresets();
+      let nw=Math.floor(e.contentRect.width),nh=Math.floor(e.contentRect.height);
+      if(nw>0&&nh>0&&(nw!==CANVAS_W||nh!==CANVAS_H)){
+        CANVAS_W=nw; CANVAS_H=nh; SPHERE_R=calcSphereR(); resizeCanvas(CANVAS_W,CANVAS_H);
+        // Re-detecta mobile/desktop ao redimensionar (cobre rotação de tela)
+        SCENE_PRESETS = getPresetDefaults().map(p=>JSON.parse(JSON.stringify(p)));
+        applyScenePos(SCENE_POS, true);
+        if(window._refreshAllSliders) window._refreshAllSliders();
       }
     }
-  });
-  _ro.observe(cnv.elt);
+  }).observe(document.body);
 }
+let _firstFrame=true;
 function draw(){
+  if(_firstFrame){
+    let nw=Math.floor(window.innerWidth),nh=Math.floor(window.innerHeight);
+    if(nw>0&&nh>0&&(nw!==CANVAS_W||nh!==CANVAS_H)){CANVAS_W=nw;CANVAS_H=nh;SPHERE_R=calcSphereR();resizeCanvas(CANVAS_W,CANVAS_H);init();}
+    _firstFrame=false;
+  }
   if(BG_FADE){fill(BG_COLOR[0],BG_COLOR[1],BG_COLOR[2],BG_FADE_ALPHA);noStroke();rect(0,0,width,height);}
   else{background(BG_COLOR[0],BG_COLOR[1],BG_COLOR[2]);}
   if(attractor.strength>0){attractor.strength=max(0,attractor.strength-ATTRACTOR_DECAY);if(attractor.strength===0)attractor.active=false;}
@@ -414,7 +389,9 @@ function windowResized(){
   CANVAS_W=document.body.clientWidth||window.innerWidth;
   CANVAS_H=document.body.clientHeight||window.innerHeight;
   resizeCanvas(CANVAS_W,CANVAS_H);
-  applyCorrectPresets();
+  SCENE_PRESETS = getPresetDefaults().map(p=>JSON.parse(JSON.stringify(p)));
+  applyScenePos(SCENE_POS, true);
+  if(window._refreshAllSliders) window._refreshAllSliders();
 }
 
 class Particle{
