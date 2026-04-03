@@ -379,11 +379,6 @@ function getSceneDefaults(){
     ? SCENE_DEFAULTS_MOBILE
     : SCENE_DEFAULTS_DESKTOP;
 }
-//const IS_MOBILE = window.innerWidth <= 768;
-
-const SCENE_DEFAULTS = IS_MOBILE
-  ? SCENE_DEFAULTS_MOBILE
-  : SCENE_DEFAULTS_DESKTOP;
 
 // Presets editáveis em runtime (inicializados com os defaults hardcoded)
 let SCENE_PRESETS = getSceneDefaults().map(p=>JSON.parse(JSON.stringify(p)));
