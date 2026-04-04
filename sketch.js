@@ -28,7 +28,7 @@ function toSphere(x,y){
 
 // ── PRESETS HARDCODED ──────────────────────────────────────────────────────────
 // Edite esses valores usando ?edit=true e depois exporte via botão "Exportar JSON"
-const SCENE_DEFAULTS_DESKTOP = [
+const SCENE_DEFAULTS = [
   {
     "FIELD_SCALE": 0.0018,
     "FIELD_ANGLE": 5.17,
@@ -201,74 +201,8 @@ const SCENE_DEFAULTS_DESKTOP = [
   }
 ];
 
-const SCENE_DEFAULTS_MOBILE = [
-  {
-    "FIELD_SCALE": 0.0018, "FIELD_ANGLE": 5.17, "FIELD_EVOLUTION": 0.0005,
-    "REPULSION_RADIUS": 65, "REPULSION_STRENGTH": 1.65,
-    "NUM_PARTICLES": 500, "TRAIL_LENGTH": 10, "MIN_WIDTH": 1.5, "MAX_WIDTH": 2,
-    "SPEED": 0.8, "WRAP_EDGES": true,
-    "ATTRACTOR_RADIUS": 430, "ATTRACTOR_STRENGTH": 16, "ATTRACTOR_DECAY": 0.008, "ORBIT_DISTANCE": 300,
-    "FADE_TAIL": false, "BG_FADE": true, "BG_FADE_ALPHA": 60,
-    "SAT_MULT": 1, "LIGHT_MULT": 1, "BG_COLOR": [15,14,23],
-    "PALETTE": [[20,80,140,0.3],[40,140,180,0.25],[80,200,200,0.2],[20,40,80,0.15],[160,220,230,0.1]],
-    "SPHERE_R_PCT": 0.42, "SPHERE_R_MIN": 120, "SPHERE_R_MAX": 500, "ROT_SPEED": 0
-  },
-  {
-    "FIELD_SCALE": 0.0003385866799261537, "FIELD_ANGLE": 8.962326101978022, "FIELD_EVOLUTION": 0.0016930841826039563,
-    "REPULSION_RADIUS": 70.9477978021978, "REPULSION_STRENGTH": 1.246243325186813,
-    "NUM_PARTICLES": 300, "TRAIL_LENGTH": 5, "MIN_WIDTH": 1.8529670329670322, "MAX_WIDTH": 5.7076483516483485,
-    "SPEED": 0.8, "WRAP_EDGES": true,
-    "ATTRACTOR_RADIUS": 420.5320128791209, "ATTRACTOR_STRENGTH": 13.074269919999999, "ATTRACTOR_DECAY": 0.011599823120175823, "ORBIT_DISTANCE": 46.395017952351644,
-    "FADE_TAIL": false, "BG_FADE": true, "BG_FADE_ALPHA": 40.91067710417583,
-    "SAT_MULT": 0.9986414153846154, "LIGHT_MULT": 1.0009704175824177, "BG_COLOR": [15,14,23],
-    "PALETTE": [[68,68,68,0.18],[67,74,80,0.21],[117,142,142,0.20],[166,195,201,0.18],[200,230,239,0.22]],
-    "SPHERE_R_PCT": 0.48, "SPHERE_R_MIN": 108, "SPHERE_R_MAX": 432, "ROT_SPEED": 0.0021781118382065935
-  },
-  {
-    "FIELD_SCALE": 0.0017974006346308164, "FIELD_ANGLE": 5.671879031275745, "FIELD_EVOLUTION": 0.0003764197601861311,
-    "REPULSION_RADIUS": 51.89936730979297, "REPULSION_STRENGTH": 1.2843383068280863,
-    "NUM_PARTICLES": 120, "TRAIL_LENGTH": 8, "MIN_WIDTH": 9.352536932874541, "MAX_WIDTH": 27.982292317770405,
-    "SPEED": 1.6, "WRAP_EDGES": true,
-    "ATTRACTOR_RADIUS": 359.93568594981303, "ATTRACTOR_STRENGTH": 13.52762744458418, "ATTRACTOR_DECAY": 0.017108383991137024, "ORBIT_DISTANCE": 68.01872551481429,
-    "FADE_TAIL": false, "BG_FADE": false, "BG_FADE_ALPHA": 18.51802057774738,
-    "SAT_MULT": 0.8801318990017183, "LIGHT_MULT": 1.0856200721416298, "BG_COLOR": [22,21,29],
-    "PALETTE": [[241,237,235,0.096],[29,64,94,0.358],[27,145,137,0.307],[19,152,178,0.094],[45,182,228,0.145]],
-    "SPHERE_R_PCT": 0.34, "SPHERE_R_MIN": 143, "SPHERE_R_MAX": 500, "ROT_SPEED": 0.0008515676779094782
-  },
-  {
-    "FIELD_SCALE": 0.004500635032371199, "FIELD_ANGLE": 8.4728804512, "FIELD_EVOLUTION": 0.0015,
-    "REPULSION_RADIUS": 44.774784, "REPULSION_STRENGTH": 2.33263571968,
-    "NUM_PARTICLES": 180, "TRAIL_LENGTH": 8, "MIN_WIDTH": 6.5299136, "MAX_WIDTH": 16.09001088,
-    "SPEED": 3.0, "WRAP_EDGES": true,
-    "ATTRACTOR_RADIUS": 309.28878288, "ATTRACTOR_STRENGTH": 8.866953068800001, "ATTRACTOR_DECAY": 0.009436665085440001, "ORBIT_DISTANCE": 35.99436121856,
-    "FADE_TAIL": false, "BG_FADE": false, "BG_FADE_ALPHA": 9.6100556992,
-    "SAT_MULT": 0.987797152, "LIGHT_MULT": 1.00871632, "BG_COLOR": [222,218,208],
-    "PALETTE": [[213,96,69,0.261],[57,105,180,0.288],[201,180,58,0.175],[172,187,189,0.153],[40,54,59,0.122]],
-    "SPHERE_R_PCT": 0.38, "SPHERE_R_MIN": 132, "SPHERE_R_MAX": 500, "ROT_SPEED": 0
-  },
-  {
-    "FIELD_SCALE": 0.0053, "FIELD_ANGLE": 6.75, "FIELD_EVOLUTION": 0.0054,
-    "REPULSION_RADIUS": 54, "REPULSION_STRENGTH": 2.45,
-    "NUM_PARTICLES": 500, "TRAIL_LENGTH": 5, "MIN_WIDTH": 2, "MAX_WIDTH": 3.5,
-    "SPEED": 0.6, "WRAP_EDGES": true,
-    "ATTRACTOR_RADIUS": 465, "ATTRACTOR_STRENGTH": 14.3, "ATTRACTOR_DECAY": 0.012, "ORBIT_DISTANCE": 55,
-    "FADE_TAIL": false, "BG_FADE": true, "BG_FADE_ALPHA": 20,
-    "SAT_MULT": 1, "LIGHT_MULT": 1, "BG_COLOR": [245,240,228],
-    "PALETTE": [[255,50,50,0.25],[50,200,100,0.25],[50,100,255,0.2],[255,200,0,0.2],[200,0,200,0.1]],
-    "SPHERE_R_PCT": 0.42, "SPHERE_R_MIN": 110, "SPHERE_R_MAX": 450, "ROT_SPEED": 0
-  }
-];
-
-// pointer:coarse = tela touch. Funciona imediatamente, sem depender de dimensões.
-function isMobileDevice(){
-  return window.matchMedia('(pointer: coarse)').matches || window.innerWidth <= 768;
-}
-
-function getPresetDefaults(){
-  return isMobileDevice() ? SCENE_DEFAULTS_MOBILE : SCENE_DEFAULTS_DESKTOP;
-}
-
-let SCENE_PRESETS = getPresetDefaults().map(p=>JSON.parse(JSON.stringify(p)));
+// Presets editáveis em runtime (inicializados com os defaults hardcoded)
+let SCENE_PRESETS = SCENE_DEFAULTS.map(p=>JSON.parse(JSON.stringify(p)));
 let SCENE_POS = 0;
 
 // ── PRESET FUNCTIONS ───────────────────────────────────────────────────────────
@@ -341,9 +275,8 @@ function applyScenePos(pos,doInit){
 function emitTheme(){ var lum=0.299*BG_COLOR[0]+0.587*BG_COLOR[1]+0.114*BG_COLOR[2]; try{window.parent.postMessage({fidenzaTheme:lum>128?'light':'dark'},'*');}catch(e){} }
 function setup(){
   CANVAS_W=window.innerWidth; CANVAS_H=window.innerHeight; SPHERE_R=calcSphereR();
-  // Carrega presets corretos imediatamente — pointer:coarse não depende de dimensões
-  SCENE_PRESETS = getPresetDefaults().map(p=>JSON.parse(JSON.stringify(p)));
-  applyState(SCENE_PRESETS[0], true);
+  // Aplica preset 1 por padrão
+  applyState(SCENE_PRESETS[0], false);
   let cnv=createCanvas(CANVAS_W,CANVAS_H);
   cnv.elt.style.cssText='display:block;position:absolute;top:0;left:0;pointer-events:none;';
   document.addEventListener('mousemove',function(e){
@@ -354,16 +287,16 @@ function setup(){
   if(EDIT_MODE) buildEditUI();
   buildUserSlider();
   if(window._updateSliderTheme) window._updateSliderTheme();
+  setTimeout(function(){
+    CANVAS_W=window.innerWidth; CANVAS_H=window.innerHeight;
+    SPHERE_R=calcSphereR(); resizeCanvas(CANVAS_W,CANVAS_H); init();
+  },200);
   emitTheme();
   new ResizeObserver(function(es){
     for(let e of es){
       let nw=Math.floor(e.contentRect.width),nh=Math.floor(e.contentRect.height);
       if(nw>0&&nh>0&&(nw!==CANVAS_W||nh!==CANVAS_H)){
-        CANVAS_W=nw; CANVAS_H=nh; SPHERE_R=calcSphereR(); resizeCanvas(CANVAS_W,CANVAS_H);
-        // Re-detecta mobile/desktop ao redimensionar (cobre rotação de tela)
-        SCENE_PRESETS = getPresetDefaults().map(p=>JSON.parse(JSON.stringify(p)));
-        applyScenePos(SCENE_POS, true);
-        if(window._refreshAllSliders) window._refreshAllSliders();
+        CANVAS_W=nw;CANVAS_H=nh;SPHERE_R=calcSphereR();resizeCanvas(CANVAS_W,CANVAS_H);init();
       }
     }
   }).observe(document.body);
@@ -385,14 +318,7 @@ function draw(){
 function init(){ let s=USE_FIXED_SEED?FIXED_SEED:floor(random(999999)); randomSeed(s);noiseSeed(s);particles=[]; for(let i=0;i<NUM_PARTICLES;i++)particles.push(new Particle()); }
 function buildSpatialGrid(){ spatialGrid.cell=max(1,REPULSION_RADIUS);spatialGrid.cells={}; for(let p of particles){let cx=floor(p.x/spatialGrid.cell),cy=floor(p.y/spatialGrid.cell),k=cx+','+cy;if(!spatialGrid.cells[k])spatialGrid.cells[k]=[];spatialGrid.cells[k].push(p);} }
 function fieldAngle(x,y){return noise(x*FIELD_SCALE,y*FIELD_SCALE,frameCount*FIELD_EVOLUTION)*FIELD_ANGLE;}
-function windowResized(){
-  CANVAS_W=document.body.clientWidth||window.innerWidth;
-  CANVAS_H=document.body.clientHeight||window.innerHeight;
-  resizeCanvas(CANVAS_W,CANVAS_H);
-  SCENE_PRESETS = getPresetDefaults().map(p=>JSON.parse(JSON.stringify(p)));
-  applyScenePos(SCENE_POS, true);
-  if(window._refreshAllSliders) window._refreshAllSliders();
-}
+function windowResized(){CANVAS_W=document.body.clientWidth||window.innerWidth;CANVAS_H=document.body.clientHeight||window.innerHeight;resizeCanvas(CANVAS_W,CANVAS_H);}
 
 class Particle{
   constructor(){this.x=random(CANVAS_W);this.y=random(CANVAS_H);this.wNorm=random();this.colNorm=random();this.trail=[];this.vel={x:0,y:0};}
