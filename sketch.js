@@ -282,9 +282,17 @@ function applyScenePos(pos,doInit){
 
 // ── SETUP / DRAW ───────────────────────────────────────────────────────────────
 function emitTheme(){ var lum=0.299*BG_COLOR[0]+0.587*BG_COLOR[1]+0.114*BG_COLOR[2]; try{window.parent.postMessage({fidenzaTheme:lum>128?'light':'dark'},'*');}catch(e){} }
+function _applyForSize(w, h){
+  var isMobile = w <= 768;
+  var defaults = isMobile ? SCENE_DEFAULTS_MOBILE : SCENE_DEFAULTS_DESKTOP;
+  SCENE_PRESETS = defaults.map(p=>JSON.parse(JSON.stringify(p)));
+  applyState(SCENE_PRESETS[0], false);
+  CANVAS_W=w; CANVAS_H=h; SPHERE_R=calcSphereR();
+  resizeCanvas(CANVAS_W,CANVAS_H);
+  init();
+}
 function setup(){
   CANVAS_W=window.innerWidth; CANVAS_H=window.innerHeight; SPHERE_R=calcSphereR();
-  // Aplica preset 1 por padrão
   applyState(SCENE_PRESETS[0], false);
   let cnv=createCanvas(CANVAS_W,CANVAS_H);
   cnv.elt.style.cssText='display:block;position:absolute;top:0;left:0;pointer-events:none;';
@@ -296,19 +304,16 @@ function setup(){
   if(EDIT_MODE) buildEditUI();
   buildUserSlider();
   if(window._updateSliderTheme) window._updateSliderTheme();
-  setTimeout(function(){
-    var isMobile = window.innerWidth <= 768;
-    SCENE_PRESETS = (isMobile ? SCENE_DEFAULTS_MOBILE : SCENE_DEFAULTS_DESKTOP).map(p=>JSON.parse(JSON.stringify(p)));
-    applyState(SCENE_PRESETS[0], false);
-    CANVAS_W=window.innerWidth; CANVAS_H=window.innerHeight;
-    SPHERE_R=calcSphereR(); resizeCanvas(CANVAS_W,CANVAS_H); init();
-  },200);
   emitTheme();
+  // ResizeObserver dispara imediatamente no load E em cada resize/rotação.
+  // É o único evento confiável que reflete as dimensões reais do iframe.
+  var _lastW=0, _lastH=0;
   new ResizeObserver(function(es){
     for(let e of es){
-      let nw=Math.floor(e.contentRect.width),nh=Math.floor(e.contentRect.height);
-      if(nw>0&&nh>0&&(nw!==CANVAS_W||nh!==CANVAS_H)){
-        CANVAS_W=nw;CANVAS_H=nh;SPHERE_R=calcSphereR();resizeCanvas(CANVAS_W,CANVAS_H);init();
+      let nw=Math.round(e.contentRect.width), nh=Math.round(e.contentRect.height);
+      if(nw>0 && nh>0 && (nw!==_lastW || nh!==_lastH)){
+        _lastW=nw; _lastH=nh;
+        _applyForSize(nw, nh);
       }
     }
   }).observe(document.body);
@@ -331,10 +336,9 @@ function init(){ let s=USE_FIXED_SEED?FIXED_SEED:floor(random(999999)); randomSe
 function buildSpatialGrid(){ spatialGrid.cell=max(1,REPULSION_RADIUS);spatialGrid.cells={}; for(let p of particles){let cx=floor(p.x/spatialGrid.cell),cy=floor(p.y/spatialGrid.cell),k=cx+','+cy;if(!spatialGrid.cells[k])spatialGrid.cells[k]=[];spatialGrid.cells[k].push(p);} }
 function fieldAngle(x,y){return noise(x*FIELD_SCALE,y*FIELD_SCALE,frameCount*FIELD_EVOLUTION)*FIELD_ANGLE;}
 function windowResized(){
-  CANVAS_W=document.body.clientWidth||window.innerWidth;CANVAS_H=document.body.clientHeight||window.innerHeight;resizeCanvas(CANVAS_W,CANVAS_H);
-  var isMobile = window.innerWidth <= 768;
-  SCENE_PRESETS = (isMobile ? SCENE_DEFAULTS_MOBILE : SCENE_DEFAULTS_DESKTOP).map(p=>JSON.parse(JSON.stringify(p)));
-  applyScenePos(SCENE_POS, true);
+  CANVAS_W=document.body.clientWidth||window.innerWidth; CANVAS_H=document.body.clientHeight||window.innerHeight;
+  resizeCanvas(CANVAS_W,CANVAS_H);
+  _applyForSize(CANVAS_W, CANVAS_H);
 }
 
 class Particle{
