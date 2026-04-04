@@ -201,7 +201,7 @@ const SCENE_DEFAULTS_DESKTOP = [
   }
 ];
 
-// Presets mobile — criados por você
+// Presets mobile
 const SCENE_DEFAULTS_MOBILE = [
   {"FIELD_SCALE":0.0018,"FIELD_ANGLE":5.17,"FIELD_EVOLUTION":0.0005,"REPULSION_RADIUS":65,"REPULSION_STRENGTH":1.65,"NUM_PARTICLES":700,"TRAIL_LENGTH":10,"MIN_WIDTH":1.5,"MAX_WIDTH":2,"SPEED":0.2,"WRAP_EDGES":true,"ATTRACTOR_RADIUS":430,"ATTRACTOR_STRENGTH":16,"ATTRACTOR_DECAY":0.008,"ORBIT_DISTANCE":300,"FADE_TAIL":false,"BG_FADE":true,"BG_FADE_ALPHA":60,"SAT_MULT":1,"LIGHT_MULT":1,"BG_COLOR":[15,14,23],"PALETTE":[[20,80,140,0.3],[40,140,180,0.25],[80,200,200,0.2],[20,40,80,0.15],[160,220,230,0.1]],"SPHERE_R_PCT":0.38,"SPHERE_R_MIN":120,"SPHERE_R_MAX":500,"ROT_SPEED":0},
   {"FIELD_SCALE":0.0003385866799261537,"FIELD_ANGLE":8.962326101978022,"FIELD_EVOLUTION":0.0016930841826039563,"REPULSION_RADIUS":70.9477978021978,"REPULSION_STRENGTH":1.246243325186813,"NUM_PARTICLES":237,"TRAIL_LENGTH":5,"MIN_WIDTH":1.8529670329670322,"MAX_WIDTH":5.7076483516483485,"SPEED":0.2,"WRAP_EDGES":true,"ATTRACTOR_RADIUS":420.5320128791209,"ATTRACTOR_STRENGTH":13.074269919999999,"ATTRACTOR_DECAY":0.011599823120175823,"ORBIT_DISTANCE":46.395017952351644,"FADE_TAIL":false,"BG_FADE":true,"BG_FADE_ALPHA":40.91067710417583,"SAT_MULT":0.9986414153846154,"LIGHT_MULT":1.0009704175824177,"BG_COLOR":[15,14,23],"PALETTE":[[68,68,68,0.18160734474164691],[67,74,80,0.21019346395471195],[117,142,142,0.20369410451547496],[166,195,201,0.18102243288826908],[200,230,239,0.22348265389989713]],"SPHERE_R_PCT":0.44,"SPHERE_R_MIN":108.08460616791209,"SPHERE_R_MAX":432.402542596923,"ROT_SPEED":0.0021781118382065935},
@@ -209,6 +209,12 @@ const SCENE_DEFAULTS_MOBILE = [
   {"FIELD_SCALE":0.004500635032371199,"FIELD_ANGLE":8.4728804512,"FIELD_EVOLUTION":0.0015,"REPULSION_RADIUS":44.774784000000004,"REPULSION_STRENGTH":2.33263571968,"NUM_PARTICLES":60,"TRAIL_LENGTH":8,"MIN_WIDTH":6.5299136,"MAX_WIDTH":16.09001088,"SPEED":3.5,"WRAP_EDGES":true,"ATTRACTOR_RADIUS":309.28878288,"ATTRACTOR_STRENGTH":8.866953068800001,"ATTRACTOR_DECAY":0.009436665085440001,"ORBIT_DISTANCE":35.99436121856,"FADE_TAIL":false,"BG_FADE":false,"BG_FADE_ALPHA":9.6100556992,"SAT_MULT":0.987797152,"LIGHT_MULT":1.00871632,"BG_COLOR":[222,218,208],"PALETTE":[[213,96,69,0.26136644480000004],[57,105,180,0.2880590054691152],[201,180,58,0.17495236272],[172,187,189,0.15320672116426814],[40,54,59,0.12241546584661667]],"SPHERE_R_PCT":0.38,"SPHERE_R_MIN":132.2293078912,"SPHERE_R_MAX":555.2017184128,"ROT_SPEED":0},
   {"FIELD_SCALE":0.0053,"FIELD_ANGLE":6.75,"FIELD_EVOLUTION":0.0054,"REPULSION_RADIUS":54,"REPULSION_STRENGTH":2.45,"NUM_PARTICLES":700,"TRAIL_LENGTH":5,"MIN_WIDTH":2,"MAX_WIDTH":3.5,"SPEED":0.25,"WRAP_EDGES":true,"ATTRACTOR_RADIUS":465,"ATTRACTOR_STRENGTH":14.3,"ATTRACTOR_DECAY":0.012,"ORBIT_DISTANCE":55,"FADE_TAIL":false,"BG_FADE":true,"BG_FADE_ALPHA":20,"SAT_MULT":1,"LIGHT_MULT":1,"BG_COLOR":[245,240,228],"PALETTE":[[255,50,50,0.25],[50,200,100,0.25],[50,100,255,0.2],[255,200,0,0.2],[200,0,200,0.1]],"SPHERE_R_PCT":0.38,"SPHERE_R_MIN":110,"SPHERE_R_MAX":450,"ROT_SPEED":0}
 ];
+
+function _chooseAndApplyPresets(){
+  var isMobile = window.innerWidth <= 768;
+  SCENE_PRESETS = (isMobile ? SCENE_DEFAULTS_MOBILE : SCENE_DEFAULTS_DESKTOP).map(p=>JSON.parse(JSON.stringify(p)));
+  applyState(SCENE_PRESETS[0], true);
+}
 
 // Presets editáveis em runtime (inicializados com os defaults hardcoded)
 let SCENE_PRESETS = SCENE_DEFAULTS_DESKTOP.map(p=>JSON.parse(JSON.stringify(p)));
@@ -282,17 +288,9 @@ function applyScenePos(pos,doInit){
 
 // ── SETUP / DRAW ───────────────────────────────────────────────────────────────
 function emitTheme(){ var lum=0.299*BG_COLOR[0]+0.587*BG_COLOR[1]+0.114*BG_COLOR[2]; try{window.parent.postMessage({fidenzaTheme:lum>128?'light':'dark'},'*');}catch(e){} }
-function _applyForSize(w, h){
-  var isMobile = w <= 768;
-  var defaults = isMobile ? SCENE_DEFAULTS_MOBILE : SCENE_DEFAULTS_DESKTOP;
-  SCENE_PRESETS = defaults.map(p=>JSON.parse(JSON.stringify(p)));
-  applyState(SCENE_PRESETS[0], false);
-  CANVAS_W=w; CANVAS_H=h; SPHERE_R=calcSphereR();
-  resizeCanvas(CANVAS_W,CANVAS_H);
-  init();
-}
 function setup(){
   CANVAS_W=window.innerWidth; CANVAS_H=window.innerHeight; SPHERE_R=calcSphereR();
+  // Aplica preset 1 por padrão
   applyState(SCENE_PRESETS[0], false);
   let cnv=createCanvas(CANVAS_W,CANVAS_H);
   cnv.elt.style.cssText='display:block;position:absolute;top:0;left:0;pointer-events:none;';
@@ -304,16 +302,17 @@ function setup(){
   if(EDIT_MODE) buildEditUI();
   buildUserSlider();
   if(window._updateSliderTheme) window._updateSliderTheme();
+  setTimeout(function(){
+    CANVAS_W=window.innerWidth; CANVAS_H=window.innerHeight;
+    SPHERE_R=calcSphereR(); resizeCanvas(CANVAS_W,CANVAS_H);
+    _chooseAndApplyPresets();
+  },200);
   emitTheme();
-  // ResizeObserver dispara imediatamente no load E em cada resize/rotação.
-  // É o único evento confiável que reflete as dimensões reais do iframe.
-  var _lastW=0, _lastH=0;
   new ResizeObserver(function(es){
     for(let e of es){
-      let nw=Math.round(e.contentRect.width), nh=Math.round(e.contentRect.height);
-      if(nw>0 && nh>0 && (nw!==_lastW || nh!==_lastH)){
-        _lastW=nw; _lastH=nh;
-        _applyForSize(nw, nh);
+      let nw=Math.floor(e.contentRect.width),nh=Math.floor(e.contentRect.height);
+      if(nw>0&&nh>0&&(nw!==CANVAS_W||nh!==CANVAS_H)){
+        CANVAS_W=nw;CANVAS_H=nh;SPHERE_R=calcSphereR();resizeCanvas(CANVAS_W,CANVAS_H);_chooseAndApplyPresets();
       }
     }
   }).observe(document.body);
@@ -322,7 +321,7 @@ let _firstFrame=true;
 function draw(){
   if(_firstFrame){
     let nw=Math.floor(window.innerWidth),nh=Math.floor(window.innerHeight);
-    if(nw>0&&nh>0&&(nw!==CANVAS_W||nh!==CANVAS_H)){CANVAS_W=nw;CANVAS_H=nh;SPHERE_R=calcSphereR();resizeCanvas(CANVAS_W,CANVAS_H);init();}
+    if(nw>0&&nh>0&&(nw!==CANVAS_W||nh!==CANVAS_H)){CANVAS_W=nw;CANVAS_H=nh;SPHERE_R=calcSphereR();resizeCanvas(CANVAS_W,CANVAS_H);_chooseAndApplyPresets();}
     _firstFrame=false;
   }
   if(BG_FADE){fill(BG_COLOR[0],BG_COLOR[1],BG_COLOR[2],BG_FADE_ALPHA);noStroke();rect(0,0,width,height);}
@@ -335,11 +334,7 @@ function draw(){
 function init(){ let s=USE_FIXED_SEED?FIXED_SEED:floor(random(999999)); randomSeed(s);noiseSeed(s);particles=[]; for(let i=0;i<NUM_PARTICLES;i++)particles.push(new Particle()); }
 function buildSpatialGrid(){ spatialGrid.cell=max(1,REPULSION_RADIUS);spatialGrid.cells={}; for(let p of particles){let cx=floor(p.x/spatialGrid.cell),cy=floor(p.y/spatialGrid.cell),k=cx+','+cy;if(!spatialGrid.cells[k])spatialGrid.cells[k]=[];spatialGrid.cells[k].push(p);} }
 function fieldAngle(x,y){return noise(x*FIELD_SCALE,y*FIELD_SCALE,frameCount*FIELD_EVOLUTION)*FIELD_ANGLE;}
-function windowResized(){
-  CANVAS_W=document.body.clientWidth||window.innerWidth; CANVAS_H=document.body.clientHeight||window.innerHeight;
-  resizeCanvas(CANVAS_W,CANVAS_H);
-  _applyForSize(CANVAS_W, CANVAS_H);
-}
+function windowResized(){CANVAS_W=document.body.clientWidth||window.innerWidth;CANVAS_H=document.body.clientHeight||window.innerHeight;resizeCanvas(CANVAS_W,CANVAS_H);_chooseAndApplyPresets();}
 
 class Particle{
   constructor(){this.x=random(CANVAS_W);this.y=random(CANVAS_H);this.wNorm=random();this.colNorm=random();this.trail=[];this.vel={x:0,y:0};}
