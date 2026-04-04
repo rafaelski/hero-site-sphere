@@ -299,6 +299,7 @@ function setup(){
   setTimeout(function(){
     var isMobile = window.innerWidth <= 768;
     SCENE_PRESETS = (isMobile ? SCENE_DEFAULTS_MOBILE : SCENE_DEFAULTS_DESKTOP).map(p=>JSON.parse(JSON.stringify(p)));
+    applyState(SCENE_PRESETS[0], false);
     CANVAS_W=window.innerWidth; CANVAS_H=window.innerHeight;
     SPHERE_R=calcSphereR(); resizeCanvas(CANVAS_W,CANVAS_H); init();
   },200);
