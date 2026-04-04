@@ -205,7 +205,7 @@ const SCENE_DEFAULTS_DESKTOP = [
 const SCENE_DEFAULTS_MOBILE = [
   {
     "FIELD_SCALE": 0.0018, "FIELD_ANGLE": 5.17, "FIELD_EVOLUTION": 0.0005,
-    "REPULSION_RADIUS": 65, "REPULSION_STRENGTH": 1.65, "NUM_PARTICLES": 7,
+    "REPULSION_RADIUS": 65, "REPULSION_STRENGTH": 1.65, "NUM_PARTICLES": 700,
     "TRAIL_LENGTH": 10, "MIN_WIDTH": 1.5, "MAX_WIDTH": 2, "SPEED": 0.2, "WRAP_EDGES": true,
     "ATTRACTOR_RADIUS": 430, "ATTRACTOR_STRENGTH": 16, "ATTRACTOR_DECAY": 0.008, "ORBIT_DISTANCE": 300,
     "FADE_TAIL": false, "BG_FADE": true, "BG_FADE_ALPHA": 60, "SAT_MULT": 1, "LIGHT_MULT": 1,
@@ -334,8 +334,10 @@ function emitTheme(){ var lum=0.299*BG_COLOR[0]+0.587*BG_COLOR[1]+0.114*BG_COLOR
 
 function _loadPresets(){
   SCENE_PRESETS = _getDefaults().map(p=>JSON.parse(JSON.stringify(p)));
-  applyScenePos(SCENE_POS, true);
+  SCENE_POS = 0;
+  applyState(SCENE_PRESETS[0], true);
   if(window._refreshAllSliders) window._refreshAllSliders();
+  if(window._syncSliderToPos) window._syncSliderToPos(0);
 }
 
 function setup(){
@@ -352,9 +354,9 @@ function setup(){
   buildUserSlider();
   if(window._updateSliderTheme) window._updateSliderTheme();
   emitTheme();
-  // 1ª chamada: imediata — funciona quando innerWidth já está correto
+  // Detecta mobile/desktop e aplica presets corretos
+  // Duas chamadas: imediata + fallback 500ms para Safari iOS
   _loadPresets();
-  // 2ª chamada: fallback para Safari iOS onde innerWidth pode estar errado no load
   setTimeout(_loadPresets, 500);
   new ResizeObserver(function(es){
     for(let e of es){
@@ -366,13 +368,7 @@ function setup(){
     }
   }).observe(document.body);
 }
-let _firstFrame=true;
 function draw(){
-  if(_firstFrame){
-    let nw=Math.floor(window.innerWidth),nh=Math.floor(window.innerHeight);
-    if(nw>0&&nh>0&&(nw!==CANVAS_W||nh!==CANVAS_H)){CANVAS_W=nw;CANVAS_H=nh;SPHERE_R=calcSphereR();resizeCanvas(CANVAS_W,CANVAS_H);init();}
-    _firstFrame=false;
-  }
   if(BG_FADE){fill(BG_COLOR[0],BG_COLOR[1],BG_COLOR[2],BG_FADE_ALPHA);noStroke();rect(0,0,width,height);}
   else{background(BG_COLOR[0],BG_COLOR[1],BG_COLOR[2]);}
   if(attractor.strength>0){attractor.strength=max(0,attractor.strength-ATTRACTOR_DECAY);if(attractor.strength===0)attractor.active=false;}
@@ -868,6 +864,7 @@ function buildUserSlider(){
   },500);
 
   setVal(0,false);
+  window._syncSliderToPos = function(v){ setVal(v, false); };
   playHint();
 
   function buildAbstractIcon(type){
